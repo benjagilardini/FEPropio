@@ -17,6 +17,7 @@ import { useToast } from '../../context/ToastContext';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import StatusChip from '../../components/common/StatusChip';
 import type { PaymentAccount } from '../../types';
+import { leaseApi } from '../../api/leaseApi';
 
 const steps = ['Cargar documento', 'Confirmar datos', 'Habilitar acceso al locatario'];
 
@@ -35,7 +36,10 @@ const frequencyOptions = [
 const fieldLabels: Record<string, string> = {
   landlordName: 'Locador',
   tenantName: 'Locatario',
+  tenantDni: 'DNI del locatario',
+  tenantEmail: 'Email del locatario',
   startDate: 'Inicio del plazo',
+  endDate: 'Fin del plazo',
   duration: 'Duración',
   initialRent: 'Alquiler inicial',
   securityDeposit: 'Depósito en garantía',
@@ -74,12 +78,25 @@ export default function LeaseConfirmPage() {
   const [correctedValue, setCorrectedValue] = useState('');
   const [selectedFieldIndex, setSelectedFieldIndex] = useState<number | null>(null);
   const [error, setError] = useState('');
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
   // Lease data form
   const { register, handleSubmit, control, reset } = useForm<LeaseFormValues>();
 
   // Payment form
   const { register: regPay, handleSubmit: handlePaySubmit, reset: resetPay } = useForm<PaymentAccount>();
+
+  // Load PDF preview
+  useEffect(() => {
+    if (!lease?.document?.fileId) return;
+    let revoked = false;
+    leaseApi.downloadDocument(leaseId!).then((res) => {
+      if (revoked) return;
+      const url = URL.createObjectURL(res.data);
+      setPdfUrl(url);
+    }).catch(() => {});
+    return () => { revoked = true; if (pdfUrl) URL.revokeObjectURL(pdfUrl); };
+  }, [lease?.document?.fileId, leaseId]);
 
   // Pre-fill forms when lease loads
   useEffect(() => {
@@ -234,8 +251,16 @@ export default function LeaseConfirmPage() {
             {lease.document?.fileName && (
               <Typography variant="body2" sx={{ fontWeight: 600, mb: 2 }}>{lease.document.fileName}</Typography>
             )}
-            <Box sx={{ bgcolor: '#f5f5f5', borderRadius: 1, p: 3, minHeight: 280, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Typography variant="body2" sx={{ color: 'text.secondary' }}>Vista previa del documento</Typography>
+            <Box sx={{ bgcolor: '#f5f5f5', borderRadius: 1, minHeight: 400, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+              {pdfUrl ? (
+                <iframe
+                  src={pdfUrl}
+                  title="Vista previa del contrato"
+                  style={{ width: '100%', height: 400, border: 'none', borderRadius: 4 }}
+                />
+              ) : (
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>Cargando vista previa...</Typography>
+              )}
             </Box>
             {selectedField?.sourceText && (
               <Box sx={{ mt: 2, p: 2, bgcolor: '#fff3e0', borderRadius: 1.5, display: 'flex', gap: 1, alignItems: 'flex-start' }}>

@@ -86,7 +86,7 @@ export default function AdjustmentsOverviewPage() {
     if (!unit || !adjData) return;
     adjData.forEach((adj) => {
       const row = { unit, lease, adjustment: adj };
-      if (adj.status === 'final') {
+      if (adj.status === 'confirmed') {
         appliedRows.push(row);
       } else {
         upcomingRows.push(row);

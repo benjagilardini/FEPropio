@@ -301,7 +301,7 @@ export default function AdjustmentPage() {
                         <Typography variant="body2">{adjustment.endIndexValue}</Typography>
                       </TableCell>
                       <TableCell>
-                        <StatusChip status={adjustment.status === 'final' ? 'confirmed' : 'pending'} variant="outlined" />
+                        <StatusChip status={adjustment.status === 'confirmed' ? 'confirmed' : 'pending'} variant="outlined" />
                       </TableCell>
                     </TableRow>
                   )}

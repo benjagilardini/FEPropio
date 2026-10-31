@@ -28,9 +28,17 @@ export function useTenantLeases() {
 export function useCreateLease() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ unitId, data }: { unitId: string; data: LeaseInput }) =>
-      leaseApi.create(unitId, data),
+    mutationFn: ({ unitId, data, file }: { unitId: string; data: LeaseInput; file?: File }) =>
+      leaseApi.create(unitId, data, file),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['leases'] }),
+  });
+}
+
+export function useExtractLease() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (leaseId: string) => leaseApi.extract(leaseId),
+    onSuccess: (lease) => qc.invalidateQueries({ queryKey: ['leases', lease.id] }),
   });
 }
 

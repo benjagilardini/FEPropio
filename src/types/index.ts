@@ -147,7 +147,7 @@ export interface LeaseInput {
 }
 
 // ---- Rent Adjustment ----
-export type AdjustmentStatus = 'estimated' | 'final';
+export type AdjustmentStatus = 'pending' | 'estimated' | 'confirmed';
 
 export interface RentAdjustment {
   id: string;

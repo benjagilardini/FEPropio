@@ -1,33 +1,39 @@
 import { useState } from 'react';
 import {
-  Box, Typography, Paper, Table, TableBody, TableCell, TableContainer,
-  TableHead, TableRow, Button, Dialog, DialogTitle, DialogContent,
-  DialogActions, TextField, MenuItem, Alert, Collapse, List,
-  ListItem, ListItemText, Pagination as MuiPagination,
+  Box, Typography, Paper, Divider, Button, Dialog, DialogTitle,
+  DialogContent, DialogActions, TextField, MenuItem, Alert, Collapse,
+  IconButton, Chip, Pagination as MuiPagination,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import BuildIcon from '@mui/icons-material/Build';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import PlumbingIcon from '@mui/icons-material/Plumbing';
+import ElectricalServicesIcon from '@mui/icons-material/ElectricalServices';
+import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
+import FoundationIcon from '@mui/icons-material/Foundation';
+import KitchenIcon from '@mui/icons-material/Kitchen';
+import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import { useTenantLeases } from '../../hooks/useLeases';
 import { useMaintenanceRequests, useCreateMaintenanceRequest } from '../../hooks/useMaintenance';
 import { useToast } from '../../context/ToastContext';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
 import StatusChip from '../../components/common/StatusChip';
+import PageHeader from '../../components/common/PageHeader';
 import { formatDateTime } from '../../utils/formatDate';
 import { useForm, Controller } from 'react-hook-form';
 import type { MaintenanceInput } from '../../types';
 
 const categoryOptions = [
-  { value: 'plumbing', label: 'Plomeria' },
-  { value: 'electrical', label: 'Electricidad' },
-  { value: 'gas', label: 'Gas' },
-  { value: 'structural', label: 'Estructura' },
-  { value: 'appliance', label: 'Electrodomestico' },
-  { value: 'other', label: 'Otro' },
+  { value: 'plumbing', label: 'Plomería', icon: <PlumbingIcon sx={{ fontSize: 20 }} /> },
+  { value: 'electrical', label: 'Electricidad', icon: <ElectricalServicesIcon sx={{ fontSize: 20 }} /> },
+  { value: 'gas', label: 'Gas', icon: <LocalFireDepartmentIcon sx={{ fontSize: 20 }} /> },
+  { value: 'structural', label: 'Estructura', icon: <FoundationIcon sx={{ fontSize: 20 }} /> },
+  { value: 'appliance', label: 'Electrodoméstico', icon: <KitchenIcon sx={{ fontSize: 20 }} /> },
+  { value: 'other', label: 'Otro', icon: <MoreHorizIcon sx={{ fontSize: 20 }} /> },
 ];
 
-const categoryLabels: Record<string, string> = Object.fromEntries(categoryOptions.map((o) => [o.value, o.label]));
+const categoryMap = Object.fromEntries(categoryOptions.map((o) => [o.value, o]));
 
 export default function TenantMaintenancePage() {
   const { data: leases, isLoading: leasesLoading } = useTenantLeases();
@@ -65,106 +71,135 @@ export default function TenantMaintenancePage() {
 
   return (
     <Box>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h5">Reclamos</Typography>
-        {activeLease.status === 'active' && (
-          <Button variant="contained" startIcon={<AddIcon />} onClick={() => setDialogOpen(true)}>
-            Nuevo Reclamo
-          </Button>
-        )}
-      </Box>
+      <PageHeader
+        title="Reclamos"
+        actions={
+          activeLease.status === 'active' && (
+            <Button variant="contained" startIcon={<AddIcon />} onClick={() => setDialogOpen(true)}>
+              Nuevo reclamo
+            </Button>
+          )
+        }
+      />
 
       {requests.length === 0 ? (
-        <EmptyState message="No hay reclamos." />
+        <EmptyState
+          message="No hay reclamos."
+          description="Si tenés un problema con la vivienda, podés crear un reclamo para notificar al propietario."
+          Icon={BuildIcon}
+          action={
+            activeLease.status === 'active' ? (
+              <Button variant="outlined" startIcon={<AddIcon />} onClick={() => setDialogOpen(true)} sx={{ mt: 1 }}>
+                Crear primer reclamo
+              </Button>
+            ) : undefined
+          }
+        />
       ) : (
-        <>
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Código</TableCell>
-                  <TableCell>Categoria</TableCell>
-                  <TableCell>Ambiente</TableCell>
-                  <TableCell>Estado</TableCell>
-                  <TableCell>Fecha</TableCell>
-                  <TableCell></TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {requests.map((r) => (
-                  <>
-                    <TableRow key={r.id}>
-                      <TableCell>{r.code}</TableCell>
-                      <TableCell>{categoryLabels[r.category] || r.category}</TableCell>
-                      <TableCell>{r.room}</TableCell>
-                      <TableCell><StatusChip status={r.status} /></TableCell>
-                      <TableCell>{formatDateTime(r.createdAt)}</TableCell>
-                      <TableCell>
-                        <Button size="small" onClick={() => setExpanded(expanded === r.id ? null : r.id)}>
-                          {expanded === r.id ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                    <TableRow key={`${r.id}-detail`}>
-                      <TableCell colSpan={6} sx={{ py: 0 }}>
-                        <Collapse in={expanded === r.id}>
-                          <Box sx={{ py: 2 }}>
-                            <Typography variant="body2" fontWeight="bold">Descripcion:</Typography>
-                            <Typography variant="body2" sx={{ mb: 2 }}>{r.description}</Typography>
-                            {r.statusHistory.length > 0 && (
-                              <>
-                                <Typography variant="body2" fontWeight="bold">Historial:</Typography>
-                                <List dense>
-                                  {r.statusHistory.map((h, i) => (
-                                    <ListItem key={i}>
-                                      <ListItemText
-                                        primary={<><StatusChip status={h.status} /> {formatDateTime(h.changedAt)}</>}
-                                        secondary={h.comment}
-                                      />
-                                    </ListItem>
-                                  ))}
-                                </List>
-                              </>
-                            )}
-                          </Box>
-                        </Collapse>
-                      </TableCell>
-                    </TableRow>
-                  </>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          {totalPages > 1 && (
-            <Box display="flex" justifyContent="center" mt={2}>
-              <MuiPagination count={totalPages} page={page} onChange={(_, p) => setPage(p)} />
-            </Box>
-          )}
-        </>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+          {requests.map((r) => {
+            const isOpen = expanded === r.id;
+            const cat = categoryMap[r.category] || categoryMap.other;
+
+            return (
+              <Paper key={r.id} variant="outlined" sx={{ borderColor: 'divider', overflow: 'hidden' }}>
+                <Box
+                  onClick={() => setExpanded(isOpen ? null : r.id)}
+                  sx={{
+                    display: 'flex', alignItems: 'center', gap: 2, px: 2.5, py: 2,
+                    cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' },
+                  }}
+                >
+                  <Box sx={{ width: 40, height: 40, borderRadius: 2, bgcolor: '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: 'primary.main' }}>
+                    {cat.icon}
+                  </Box>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.25 }}>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>{cat.label}</Typography>
+                      <Chip label={r.code} size="small" variant="outlined" sx={{ height: 20, fontSize: '0.7rem' }} />
+                      <StatusChip status={r.status} />
+                    </Box>
+                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                      {r.room} · {formatDateTime(r.createdAt)}
+                    </Typography>
+                  </Box>
+                  <IconButton size="small" sx={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
+                    <ExpandMoreIcon />
+                  </IconButton>
+                </Box>
+
+                <Collapse in={isOpen}>
+                  <Divider />
+                  <Box sx={{ px: 2.5, py: 2 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>Descripción</Typography>
+                    <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2, whiteSpace: 'pre-wrap' }}>{r.description}</Typography>
+
+                    {r.statusHistory.length > 0 && (
+                      <>
+                        <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>Historial</Typography>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                          {r.statusHistory.map((h, i) => (
+                            <Box
+                              key={i}
+                              sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, p: 1.5, bgcolor: '#fafafa', borderRadius: 1.5 }}
+                            >
+                              <StatusChip status={h.status} />
+                              <Box sx={{ flex: 1 }}>
+                                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                  {formatDateTime(h.changedAt)}
+                                </Typography>
+                                {h.comment && (
+                                  <Typography variant="body2" sx={{ mt: 0.25 }}>{h.comment}</Typography>
+                                )}
+                              </Box>
+                            </Box>
+                          ))}
+                        </Box>
+                      </>
+                    )}
+                  </Box>
+                </Collapse>
+              </Paper>
+            );
+          })}
+        </Box>
       )}
 
+      {totalPages > 1 && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+          <MuiPagination count={totalPages} page={page} onChange={(_, p) => setPage(p)} />
+        </Box>
+      )}
+
+      {/* New request dialog */}
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Nuevo Reclamo</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700 }}>Nuevo reclamo</DialogTitle>
         <Box component="form" onSubmit={handleSubmit(onSubmit)}>
-          <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 1 }}>
             {error && <Alert severity="error">{error}</Alert>}
             <Controller
               name="category"
               control={control}
               render={({ field }) => (
-                <TextField select label="Categoria" {...field}>
+                <TextField select label="Categoría" {...field} size="small">
                   {categoryOptions.map((o) => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}
                 </TextField>
               )}
             />
-            <TextField label="Ambiente" {...register('room', { required: true })} placeholder="Ej: Cocina, Bano, Dormitorio" />
             <TextField
-              label="Descripcion" multiline rows={4}
+              label="Ambiente"
+              {...register('room', { required: true })}
+              placeholder="Ej: Cocina, Baño, Dormitorio"
+              size="small"
+            />
+            <TextField
+              label="Descripción" multiline rows={4}
               {...register('description', { required: true, minLength: 10 })}
-              helperText="Minimo 10 caracteres"
+              helperText="Mínimo 10 caracteres"
+              size="small"
             />
           </DialogContent>
-          <DialogActions>
+          <DialogActions sx={{ px: 3, pb: 2.5 }}>
             <Button onClick={() => setDialogOpen(false)}>Cancelar</Button>
             <Button type="submit" variant="contained" disabled={createMut.isPending}>Enviar</Button>
           </DialogActions>

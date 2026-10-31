@@ -24,7 +24,7 @@ export default function AcceptInvitationPage() {
       setSuccess(true);
       setTimeout(() => navigate('/login'), 2000);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al aceptar la invitacion');
+      setError(err.response?.data?.message || 'Error al aceptar la invitación');
     }
   };
 
@@ -53,7 +53,7 @@ export default function AcceptInvitationPage() {
             </Box>
             <Typography variant="h5">Activar cuenta</Typography>
             <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
-              Crea tu contrasena para acceder al sistema.
+              Creá tu contraseña para acceder al sistema.
             </Typography>
           </Box>
 
@@ -64,8 +64,8 @@ export default function AcceptInvitationPage() {
               {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
               <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <TextField
-                  fullWidth label="Contrasena" type="password"
-                  helperText="Minimo 8 caracteres, al menos una letra y un numero"
+                  fullWidth label="Contraseña" type="password"
+                  helperText="Mínimo 8 caracteres, al menos una letra y un número"
                   {...register('password', { required: true })}
                 />
                 <Button fullWidth variant="contained" type="submit" size="large" disabled={isSubmitting}>

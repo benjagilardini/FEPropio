@@ -2,8 +2,17 @@ import { api } from './axiosInstance';
 import type { Lease, LeaseInput, PaymentAccount, PaginatedResponse } from '../types';
 
 export const leaseApi = {
-  create: (unitId: string, data: LeaseInput) =>
-    api.post<{ data: Lease }>(`/units/${unitId}/leases`, data).then((r) => r.data.data),
+  create: (unitId: string, data: LeaseInput, file?: File) => {
+    const formData = new FormData();
+    formData.append('data', JSON.stringify(data));
+    if (file) formData.append('contract', file);
+    return api.post<{ data: Lease }>(`/units/${unitId}/leases`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }).then((r) => r.data.data);
+  },
+
+  extract: (leaseId: string) =>
+    api.post<{ data: Lease }>(`/leases/${leaseId}/extract`).then((r) => r.data.data),
 
   listByUnit: (unitId: string, params?: { page?: number; limit?: number }) =>
     api.get<PaginatedResponse<Lease>>(`/units/${unitId}/leases`, { params }).then((r) => r.data),

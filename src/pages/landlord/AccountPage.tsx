@@ -52,7 +52,7 @@ export default function AccountPage() {
       setProfileMsg('');
       const [firstName, ...rest] = data.fullName.trim().split(' ');
       const lastName = rest.join(' ');
-      await api.put('/users/profile', { firstName, lastName, phone: data.phone });
+      await api.put('/users/me', { firstName, lastName, phone: data.phone });
       setProfileMsg('Perfil actualizado.');
     } catch (err: any) {
       setProfileError(err.response?.data?.message || 'Error al actualizar');
@@ -67,7 +67,7 @@ export default function AccountPage() {
         setPasswordError('Las contraseñas no coinciden.');
         return;
       }
-      await api.put('/users/password', {
+      await api.put('/users/me/password', {
         currentPassword: data.currentPassword,
         newPassword: data.newPassword,
       });

@@ -12,7 +12,7 @@ import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import IconButton from '@mui/material/IconButton';
 import { useUnit } from '../../hooks/useUnits';
-import { useCreateLease, useLeasesByUnit } from '../../hooks/useLeases';
+import { useCreateLease, useExtractLease, useLeasesByUnit } from '../../hooks/useLeases';
 import { useToast } from '../../context/ToastContext';
 import type { Unit } from '../../types';
 
@@ -56,12 +56,12 @@ export default function LeaseUploadPage() {
   const { data: unit } = useUnit(unitId || '');
   const { data: leasesData } = useLeasesByUnit(unitId || '');
   const createMutation = useCreateLease();
+  const extractMutation = useExtractLease();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const toast = useToast();
   const [file, setFile] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
-  const [extractionProgress, setExtractionProgress] = useState(0);
   const [extractionSteps, setExtractionSteps] = useState<ExtractionStep[]>([
     { label: 'Documento cargado', done: false, active: false },
     { label: 'Texto reconocido (OCR)', done: false, active: false },
@@ -69,47 +69,68 @@ export default function LeaseUploadPage() {
     { label: 'Datos listos para confirmar', done: false, active: false },
   ]);
   const [extractionDone, setExtractionDone] = useState(false);
+  const [createdLeaseId, setCreatedLeaseId] = useState<string | null>(null);
   const [error, setError] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const simulateExtraction = useCallback((selectedFile: File) => {
+  const setStepState = (activeIdx: number, doneUpTo: number) => {
+    setExtractionSteps((prev) =>
+      prev.map((s, i) => ({
+        ...s,
+        active: i === activeIdx,
+        done: i < doneUpTo,
+      })),
+    );
+  };
+
+  const processFile = useCallback(async (selectedFile: File) => {
     setFile(selectedFile);
-    setExtractionProgress(0);
     setExtractionDone(false);
+    setError('');
+    setIsProcessing(true);
 
-    const stepDurations = [600, 900, 1200, 500];
-    let currentStep = 0;
+    try {
+      // Step 1: Upload & create lease
+      setStepState(0, 0);
 
-    const advanceStep = () => {
-      if (currentStep >= 4) {
-        setExtractionDone(true);
-        return;
+      const existingDraft = leasesData?.data?.find((l) => l.status === 'draft');
+      let leaseId: string;
+
+      if (existingDraft) {
+        leaseId = existingDraft.id;
+      } else {
+        const lease = await createMutation.mutateAsync({
+          unitId: unitId!,
+          data: {
+            startDate: new Date().toISOString().split('T')[0],
+            endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000 * 2).toISOString().split('T')[0],
+            initialRent: '0',
+            adjustmentIndex: 'ICL',
+            adjustmentFrequencyMonths: 6,
+          },
+          file: selectedFile,
+        });
+        leaseId = lease.id;
       }
 
-      setExtractionSteps((prev) =>
-        prev.map((s, i) => ({
-          ...s,
-          active: i === currentStep,
-          done: i < currentStep,
-        })),
-      );
-      setExtractionProgress(((currentStep + 0.5) / 4) * 100);
+      setCreatedLeaseId(leaseId);
+      setStepState(1, 1);
 
-      setTimeout(() => {
-        setExtractionSteps((prev) =>
-          prev.map((s, i) => ({
-            ...s,
-            active: false,
-            done: i <= currentStep,
-          })),
-        );
-        setExtractionProgress(((currentStep + 1) / 4) * 100);
-        currentStep++;
-        advanceStep();
-      }, stepDurations[currentStep]);
-    };
+      // Step 2-3: Extract with AI
+      setStepState(2, 2);
+      await extractMutation.mutateAsync(leaseId);
 
-    advanceStep();
-  }, []);
+      // Step 4: Done
+      setStepState(-1, 4);
+      setExtractionDone(true);
+    } catch (err: any) {
+      const msg = err.response?.data?.message || 'Error al procesar el documento';
+      setError(msg);
+      toast.error(msg);
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [unitId, leasesData, createMutation, extractMutation, toast]);
 
   const handleFiles = useCallback((files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -123,8 +144,8 @@ export default function LeaseUploadPage() {
       return;
     }
     setError('');
-    simulateExtraction(f);
-  }, [simulateExtraction]);
+    processFile(f);
+  }, [processFile]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -132,38 +153,15 @@ export default function LeaseUploadPage() {
     handleFiles(e.dataTransfer.files);
   }, [handleFiles]);
 
-  const handleContinue = async () => {
-    if (!file) return;
-    try {
-      setError('');
-      // Reuse existing draft if one exists, otherwise create new
-      const existingDraft = leasesData?.data?.find((l) => l.status === 'draft');
-      if (existingDraft) {
-        navigate(`/leases/${existingDraft.id}/confirm`);
-        return;
-      }
-      const lease = await createMutation.mutateAsync({
-        unitId: unitId!,
-        data: {
-          startDate: new Date().toISOString().split('T')[0],
-          endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000 * 2).toISOString().split('T')[0],
-          initialRent: '0',
-          adjustmentIndex: 'ICL',
-          adjustmentFrequencyMonths: 6,
-        },
-      });
-      navigate(`/leases/${lease.id}/confirm`);
-    } catch (err: any) {
-      const msg = err.response?.data?.message || 'Error al crear el contrato';
-      setError(msg);
-      toast.error(msg);
-    }
+  const handleContinue = () => {
+    if (!createdLeaseId) return;
+    navigate(`/leases/${createdLeaseId}/confirm`);
   };
 
   const removeFile = () => {
     setFile(null);
     setExtractionDone(false);
-    setExtractionProgress(0);
+    setCreatedLeaseId(null);
     setExtractionSteps((prev) => prev.map((s) => ({ ...s, done: false, active: false })));
   };
 
@@ -269,16 +267,16 @@ export default function LeaseUploadPage() {
                 <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                   {formatFileSize(file.size)}
                 </Typography>
-                {!extractionDone && (
+                {isProcessing && (
                   <Box sx={{ mt: 0.5 }}>
                     <Typography variant="caption" sx={{ color: 'primary.main' }}>
-                      Extrayendo datos del contrato... {Math.round(extractionProgress)} %
+                      Procesando documento...
                     </Typography>
-                    <LinearProgress variant="determinate" value={extractionProgress} sx={{ mt: 0.5, borderRadius: 1 }} />
+                    <LinearProgress sx={{ mt: 0.5, borderRadius: 1 }} />
                   </Box>
                 )}
               </Box>
-              <IconButton size="small" onClick={removeFile} sx={{ color: 'text.secondary' }}>
+              <IconButton size="small" onClick={removeFile} sx={{ color: 'text.secondary' }} disabled={isProcessing}>
                 <CloseIcon fontSize="small" />
               </IconButton>
             </Box>
@@ -342,10 +340,10 @@ export default function LeaseUploadPage() {
         </Button>
         <Button
           variant="contained"
-          disabled={!extractionDone || createMutation.isPending}
+          disabled={!extractionDone || isProcessing}
           onClick={handleContinue}
         >
-          {createMutation.isPending ? 'Creando...' : 'Continuar'}
+          Continuar
         </Button>
       </Box>
     </Box>

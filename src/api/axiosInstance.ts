@@ -6,7 +6,7 @@ const api = axios.create({
 });
 
 // Endpoints that should NOT trigger the refresh interceptor
-const skipRefreshUrls = ['/auth/login', '/auth/register', '/auth/refresh', '/auth/me', '/auth/forgot-password', '/auth/reset-password'];
+const skipRefreshUrls = ['/auth/login', '/auth/register', '/auth/refresh', '/auth/me', '/auth/forgot-password', '/auth/reset-password', '/auth/accept-invitation'];
 
 api.interceptors.response.use(
   (response) => response,

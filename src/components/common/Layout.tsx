@@ -38,12 +38,14 @@ const landlordNavBottom = [
 
 const tenantNav = [
   { label: 'Inicio', path: '/home', icon: <HomeIcon /> },
-  { label: 'Mi Vivienda', path: '/my-unit', icon: <ApartmentIcon /> },
   { label: 'Mi Contrato', path: '/my-lease', icon: <DescriptionIcon /> },
   { label: 'Ajustes', path: '/adjustments', icon: <TuneIcon /> },
   { label: 'Pagos', path: '/payments', icon: <PaymentIcon /> },
   { label: 'Reclamos', path: '/maintenance', icon: <BuildIcon /> },
   { label: 'Notificaciones', path: '/notifications', icon: <NotificationsIcon /> },
+];
+
+const tenantNavBottom = [
   { label: 'Mi Cuenta', path: '/account', icon: <AccountCircleIcon /> },
 ];
 
@@ -105,16 +107,27 @@ export default function Layout() {
           sx={{ color: 'inherit' }}
         >
           <ListItemIcon><LogoutIcon /></ListItemIcon>
-          <ListItemText primary="Cerrar sesion" />
+          <ListItemText primary="Cerrar sesión" />
         </ListItemButton>
       </List>
     </Box>
   ) : (
-    <Box>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Toolbar />
       <Divider />
-      <List>
+      <List sx={{ flexGrow: 1 }}>
         {tenantNav.map(renderNavItem)}
+      </List>
+      <Divider />
+      <List>
+        {tenantNavBottom.map(renderNavItem)}
+        <ListItemButton
+          onClick={handleLogout}
+          sx={{ color: 'inherit' }}
+        >
+          <ListItemIcon><LogoutIcon /></ListItemIcon>
+          <ListItemText primary="Cerrar sesión" />
+        </ListItemButton>
       </List>
     </Box>
   );
@@ -153,7 +166,7 @@ export default function Layout() {
         </Drawer>
       )}
 
-      <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 8, minHeight: '100vh' }}>
+      <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 8, minHeight: 0, height: 'calc(100vh - 64px)', overflow: 'auto' }}>
         <Outlet />
       </Box>
     </Box>

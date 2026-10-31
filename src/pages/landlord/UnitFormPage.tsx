@@ -146,7 +146,7 @@ export default function UnitFormPage() {
                 }}
               />
 
-              {/* Hidden-ish row for number/floor/apt (compact) */}
+              {/* Number / Floor / Apt */}
               <Grid container spacing={2} sx={{ mb: 2 }}>
                 <Grid size={{ xs: 4 }}>
                   <TextField fullWidth label="Número" {...register('address.number', { required: true })} />
@@ -156,6 +156,19 @@ export default function UnitFormPage() {
                 </Grid>
                 <Grid size={{ xs: 4 }}>
                   <TextField fullWidth label="Depto" {...register('address.apartment')} />
+                </Grid>
+              </Grid>
+
+              {/* City / Province / Neighborhood */}
+              <Grid container spacing={2} sx={{ mb: 2 }}>
+                <Grid size={{ xs: 4 }}>
+                  <TextField fullWidth label="Ciudad" {...register('address.city', { required: true })} />
+                </Grid>
+                <Grid size={{ xs: 4 }}>
+                  <TextField fullWidth label="Provincia" {...register('address.province', { required: true })} />
+                </Grid>
+                <Grid size={{ xs: 4 }}>
+                  <TextField fullWidth label="Barrio" {...register('address.neighborhood')} />
                 </Grid>
               </Grid>
 
@@ -231,16 +244,31 @@ export default function UnitFormPage() {
                           label={accountLabel[utilityType] || 'N° de cuenta'}
                           {...register(`utilityAccounts.${index}.accountId`)}
                         />
-                        {/* Hidden utility type selector */}
-                        <Controller
-                          name={`utilityAccounts.${index}.utilityType`}
-                          control={control}
-                          render={({ field: f }) => (
-                            <TextField select fullWidth label="Servicio" sx={{ mt: 2 }} size="small" {...f}>
-                              {utilityTypes.map((o) => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}
-                            </TextField>
-                          )}
-                        />
+                        <Grid container spacing={2} sx={{ mt: 0.5 }}>
+                          <Grid size={{ xs: 6 }}>
+                            <Controller
+                              name={`utilityAccounts.${index}.utilityType`}
+                              control={control}
+                              render={({ field: f }) => (
+                                <TextField select fullWidth label="Servicio" size="small" {...f}>
+                                  {utilityTypes.map((o) => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}
+                                </TextField>
+                              )}
+                            />
+                          </Grid>
+                          <Grid size={{ xs: 6 }}>
+                            <Controller
+                              name={`utilityAccounts.${index}.paidBy`}
+                              control={control}
+                              render={({ field: f }) => (
+                                <TextField select fullWidth label="Lo paga" size="small" {...f}>
+                                  <MenuItem value="tenant">Inquilino</MenuItem>
+                                  <MenuItem value="landlord">Propietario</MenuItem>
+                                </TextField>
+                              )}
+                            />
+                          </Grid>
+                        </Grid>
                       </Box>
                       <IconButton
                         size="small"
