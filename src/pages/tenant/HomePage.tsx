@@ -14,7 +14,7 @@ export default function HomePage() {
   if (isLoading) return <LoadingSpinner />;
 
   if (!leases || leases.length === 0) {
-    return <EmptyState message="No tenes contratos activos." />;
+    return <EmptyState message="No tenés contratos activos." />;
   }
 
   if (leases.length === 1) {

@@ -23,7 +23,7 @@ import type { Unit } from '../../types';
 function formatAddress(unit: Unit): string {
   const a = unit.address;
   let addr = `${a.street} ${a.number}`;
-  if (a.floor) addr += `, ${a.floor}.\u00B0`;
+  if (a.floor) addr += `, ${a.floor}.°`;
   if (a.apartment) addr += ` ${a.apartment}`;
   return addr;
 }
@@ -81,7 +81,7 @@ export default function LeaseDetailPage() {
   const handleInvite = async (data: { email: string; tenantName: string; tenantDni: string }) => {
     try {
       await inviteMut.mutateAsync({ leaseId: leaseId!, data });
-      toast.success('Invitaci\u00F3n enviada');
+      toast.success('Invitación enviada');
       setInviteOpen(false);
       reset();
     } catch (err: any) {
@@ -114,7 +114,7 @@ export default function LeaseDetailPage() {
           {unit && (
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               {unitAddress}
-              {lease.tenantName ? ` \u00B7 ${lease.tenantName}` : ''}
+              {lease.tenantName ? ` · ${lease.tenantName}` : ''}
             </Typography>
           )}
         </Box>
@@ -143,11 +143,11 @@ export default function LeaseDetailPage() {
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           <Paper variant="outlined" sx={{ p: 3, borderColor: 'divider' }}>
             <Typography sx={sectionTitle}>Datos del contrato</Typography>
-            <KVRow label="Vigencia" value={`${formatDate(lease.startDate)} \u2013 ${formatDate(lease.endDate)}`} />
+            <KVRow label="Vigencia" value={`${formatDate(lease.startDate)} – ${formatDate(lease.endDate)}`} />
             <KVRow label="Alquiler inicial" value={formatCurrency(lease.initialRent)} />
-            <KVRow label="\u00CDndice de ajuste" value={`${lease.adjustmentIndex} \u00B7 ${formatFreq(lease.adjustmentFrequencyMonths)}`} />
+            <KVRow label="Índice de ajuste" value={`${lease.adjustmentIndex} · ${formatFreq(lease.adjustmentFrequencyMonths)}`} />
             {lease.securityDeposit && (
-              <KVRow label="Dep\u00F3sito" value={formatCurrency(lease.securityDeposit)} />
+              <KVRow label="Depósito" value={formatCurrency(lease.securityDeposit)} />
             )}
           </Paper>
 
@@ -165,11 +165,11 @@ export default function LeaseDetailPage() {
 
           {lease.status === 'active' && nextAdjustment && (
             <Paper variant="outlined" sx={{ p: 3, borderColor: 'divider' }}>
-              <Typography sx={sectionTitle}>Pr\u00F3ximo ajuste</Typography>
+              <Typography sx={sectionTitle}>Próximo ajuste</Typography>
               <KVRow label="Fecha efectiva" value={formatDate(nextAdjustment.effectiveDate)} />
               <KVRow
                 label="Rango estimado"
-                value={`${formatCurrency(nextAdjustment.minAmount)} \u2013 ${formatCurrency(nextAdjustment.maxAmount)}`}
+                value={`${formatCurrency(nextAdjustment.minAmount)} – ${formatCurrency(nextAdjustment.maxAmount)}`}
               />
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mt: 1 }}>
                 <StatusChip status={nextAdjustment.status} />
@@ -244,7 +244,7 @@ export default function LeaseDetailPage() {
                 onClick={() => navigate(`/leases/${leaseId}/index-comparison`)}
                 sx={{ textTransform: 'uppercase', justifyContent: 'center' }}
               >
-                Comparar \u00EDndices
+                Comparar índices
               </Button>
             </Box>
           </Paper>
@@ -255,7 +255,7 @@ export default function LeaseDetailPage() {
       <ConfirmDialog
         open={confirmEnd}
         title="Finalizar contrato"
-        message={'\u00BFEst\u00E1s seguro de que quer\u00E9s finalizar este contrato? Esta acci\u00F3n no se puede deshacer.'}
+        message={'¿Estás seguro de que querés finalizar este contrato? Esta acción no se puede deshacer.'}
         confirmLabel="Finalizar"
         onConfirm={handleEndLease}
         onCancel={() => setConfirmEnd(false)}
@@ -273,7 +273,7 @@ export default function LeaseDetailPage() {
           <DialogActions>
             <Button onClick={() => setInviteOpen(false)}>Cancelar</Button>
             <Button type="submit" variant="contained" disabled={inviteMut.isPending}>
-              {inviteMut.isPending ? 'Enviando...' : 'Enviar invitaci\u00F3n'}
+              {inviteMut.isPending ? 'Enviando...' : 'Enviar invitación'}
             </Button>
           </DialogActions>
         </Box>

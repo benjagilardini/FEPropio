@@ -21,7 +21,7 @@ const steps = ['Cargar documento', 'Confirmar datos', 'Habilitar acceso al locat
 function formatUnitAddress(unit: Unit): string {
   const a = unit.address;
   let addr = `${a.street} ${a.number}`;
-  if (a.floor) addr += `, ${a.floor}.\u00B0`;
+  if (a.floor) addr += `, ${a.floor}.°`;
   if (a.apartment) addr += ` ${a.apartment}`;
   return addr;
 }
@@ -30,12 +30,12 @@ function formatUnitSubtitle(unit: Unit): string {
   const parts: string[] = [];
   const a = unit.address;
   let addr = `${a.street} ${a.number}`;
-  if (a.floor) addr += `, ${a.floor}.\u00B0`;
+  if (a.floor) addr += `, ${a.floor}.°`;
   if (a.apartment) addr += ` ${a.apartment}`;
   parts.push(addr);
   if (a.neighborhood) parts.push(a.neighborhood);
   if (a.city) parts.push(a.city);
-  return parts.join(' \u00B7 ');
+  return parts.join(' · ');
 }
 
 interface ExtractionStep {
@@ -65,7 +65,7 @@ export default function LeaseUploadPage() {
   const [extractionSteps, setExtractionSteps] = useState<ExtractionStep[]>([
     { label: 'Documento cargado', done: false, active: false },
     { label: 'Texto reconocido (OCR)', done: false, active: false },
-    { label: 'Interpretando cl\u00E1usulas', done: false, active: false },
+    { label: 'Interpretando cláusulas', done: false, active: false },
     { label: 'Datos listos para confirmar', done: false, active: false },
   ]);
   const [extractionDone, setExtractionDone] = useState(false);
@@ -115,7 +115,7 @@ export default function LeaseUploadPage() {
     if (!files || files.length === 0) return;
     const f = files[0];
     if (f.type !== 'application/pdf' && !f.type.startsWith('image/')) {
-      setError('Solo se permiten archivos PDF o im\u00E1genes.');
+      setError('Solo se permiten archivos PDF o imágenes.');
       return;
     }
     if (f.size > 10 * 1024 * 1024) {
@@ -205,7 +205,7 @@ export default function LeaseUploadPage() {
         <Paper variant="outlined" sx={{ p: 3, borderColor: 'divider' }}>
           <Typography sx={{ fontWeight: 700, fontSize: '1.05rem', mb: 1 }}>Documento del contrato</Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-            El documento queda vinculado a la unidad y disponible para ambas partes, tambi&eacute;n despu&eacute;s de que el contrato finalice.
+            El documento queda vinculado a la unidad y disponible para ambas partes, también después de que el contrato finalice.
           </Typography>
 
           {/* Drop zone */}
@@ -228,13 +228,13 @@ export default function LeaseUploadPage() {
             >
               <CloudUploadIcon sx={{ fontSize: 40, color: 'primary.main', mb: 1 }} />
               <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                Arrastr&aacute; el contrato o{' '}
+                Arrastrá el contrato o{' '}
                 <Box component="span" sx={{ color: 'primary.main', textDecoration: 'underline' }}>
                   seleccionalo
                 </Box>
               </Typography>
               <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                PDF o imagen escaneada &middot; hasta 10 MB
+                PDF o imagen escaneada · hasta 10 MB
               </Typography>
             </Box>
           )}
@@ -288,7 +288,7 @@ export default function LeaseUploadPage() {
         {/* Right: Extraction progress */}
         <Paper variant="outlined" sx={{ p: 3, borderColor: 'divider' }}>
           <Typography sx={{ fontWeight: 700, fontSize: '1.05rem', mb: 2 }}>
-            Progreso de la extracci&oacute;n
+            Progreso de la extracción
           </Typography>
 
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
@@ -329,7 +329,7 @@ export default function LeaseUploadPage() {
           >
             <InfoOutlinedIcon sx={{ fontSize: 20, mt: 0.25 }} />
             <Typography variant="body2">
-              Ning&uacute;n dato se guarda sin tu confirmaci&oacute;n. En el paso siguiente revis&aacute;s cada campo contra el documento.
+              Ningún dato se guarda sin tu confirmación. En el paso siguiente revisás cada campo contra el documento.
             </Typography>
           </Box>
         </Paper>

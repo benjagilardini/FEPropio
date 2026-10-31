@@ -28,7 +28,7 @@ export default function TenantPaymentsPage() {
   const { register, handleSubmit, reset } = useForm<PaymentInput>();
 
   if (leasesLoading || isLoading) return <LoadingSpinner />;
-  if (!activeLease) return <EmptyState message="No tenes un contrato activo." />;
+  if (!activeLease) return <EmptyState message="No tenés un contrato activo." />;
 
   const payments = data?.data || [];
   const totalPages = data?.pagination?.totalPages || 1;
@@ -77,11 +77,11 @@ export default function TenantPaymentsPage() {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>Periodo</TableCell>
+                  <TableCell>Período</TableCell>
                   <TableCell>Importe</TableCell>
                   <TableCell>Fecha de pago</TableCell>
                   <TableCell>Estado</TableCell>
-                  <TableCell>Observacion</TableCell>
+                  <TableCell>Observación</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -111,7 +111,7 @@ export default function TenantPaymentsPage() {
           <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             {error && <Alert severity="error">{error}</Alert>}
             <TextField
-              label="Periodo (YYYY-MM)" placeholder="2025-01"
+              label="Período (YYYY-MM)" placeholder="2025-01"
               {...register('period', { required: true })}
             />
             <TextField label="Importe ($)" {...register('amount', { required: true })} />

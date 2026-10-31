@@ -36,10 +36,10 @@ const fieldLabels: Record<string, string> = {
   landlordName: 'Locador',
   tenantName: 'Locatario',
   startDate: 'Inicio del plazo',
-  duration: 'Duraci\u00F3n',
+  duration: 'Duración',
   initialRent: 'Alquiler inicial',
-  securityDeposit: 'Dep\u00F3sito en garant\u00EDa',
-  adjustmentIndex: '\u00CDndice de actualizaci\u00F3n',
+  securityDeposit: 'Depósito en garantía',
+  adjustmentIndex: 'Índice de actualización',
   adjustmentFrequencyMonths: 'Periodicidad',
   propertyTaxAccount: 'Partida inmobiliaria',
   functionalUnit: 'Unidad funcional',
@@ -126,7 +126,7 @@ export default function LeaseConfirmPage() {
   const landlordName = `${user?.firstName || ''} ${user?.lastName || ''}`.trim();
 
   const unitAddress = unit
-    ? `${unit.address.street} ${unit.address.number}${unit.address.floor ? `, ${unit.address.floor}.\u00B0` : ''}${unit.address.apartment ? ` ${unit.address.apartment}` : ''}`
+    ? `${unit.address.street} ${unit.address.number}${unit.address.floor ? `, ${unit.address.floor}.°` : ''}${unit.address.apartment ? ` ${unit.address.apartment}` : ''}`
     : '';
 
   const handleConfirmField = async (index: number) => {
@@ -195,7 +195,7 @@ export default function LeaseConfirmPage() {
       {/* Title + actions */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 0.5 }}>
         <Box sx={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Typography variant="h5" sx={{ fontWeight: 700 }}>Confirmar datos extra&iacute;dos</Typography>
+          <Typography variant="h5" sx={{ fontWeight: 700 }}>Confirmar datos extraídos</Typography>
           {hasExtracted && (
             <Box sx={{ px: 1.5, py: 0.25, border: '1px solid', borderColor: 'divider', borderRadius: 1, fontSize: '0.8rem', fontWeight: 500, whiteSpace: 'nowrap' }}>
               {confirmedCount} de {fields.length} confirmados
@@ -242,7 +242,7 @@ export default function LeaseConfirmPage() {
                 <InfoOutlinedIcon sx={{ fontSize: 18, color: 'warning.dark', mt: 0.25 }} />
                 <Box>
                   <Typography variant="caption" sx={{ fontWeight: 600, color: 'warning.dark' }}>Texto de origen del campo seleccionado</Typography>
-                  <Typography variant="body2" sx={{ mt: 0.5, fontStyle: 'italic' }}>&laquo;{selectedField.sourceText}&raquo;</Typography>
+                  <Typography variant="body2" sx={{ mt: 0.5, fontStyle: 'italic' }}>«{selectedField.sourceText}»</Typography>
                 </Box>
               </Box>
             )}
@@ -251,7 +251,7 @@ export default function LeaseConfirmPage() {
           <Paper variant="outlined" sx={{ borderColor: 'divider', overflow: 'hidden' }}>
             <Box sx={{ display: 'grid', gridTemplateColumns: '140px 1fr 110px 100px', px: 2, py: 1.5, bgcolor: '#fafafa', borderBottom: '1px solid', borderColor: 'divider' }}>
               <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Campo</Typography>
-              <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Valor extra&iacute;do</Typography>
+              <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Valor extraído</Typography>
               <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Estado</Typography>
               <Box />
             </Box>
@@ -307,7 +307,7 @@ export default function LeaseConfirmPage() {
         <Paper variant="outlined" sx={{ p: 3, borderColor: 'divider', mb: 3 }}>
           <Typography sx={{ fontWeight: 700, fontSize: '1.05rem', mb: 1 }}>Datos del contrato</Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3 }}>
-            Complet&aacute; los datos del contrato. Los campos pre-llenados fueron le&iacute;dos del documento.
+            Completá los datos del contrato. Los campos pre-llenados fueron leídos del documento.
           </Typography>
 
           <Grid container spacing={2}>
@@ -363,7 +363,7 @@ export default function LeaseConfirmPage() {
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
-                label="Dep\u00F3sito en garant\u00EDa ($)"
+                label="Depósito en garantía ($)"
                 placeholder="Ej: 480000"
                 {...register('securityDeposit')}
               />
@@ -373,7 +373,7 @@ export default function LeaseConfirmPage() {
                 name="adjustmentIndex"
                 control={control}
                 render={({ field }) => (
-                  <TextField select fullWidth label="\u00CDndice de actualizaci\u00F3n" {...field}>
+                  <TextField select fullWidth label="Índice de actualización" {...field}>
                     {indexOptions.map((o) => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}
                   </TextField>
                 )}
@@ -398,7 +398,7 @@ export default function LeaseConfirmPage() {
       <Paper variant="outlined" sx={{ p: 3, borderColor: 'divider' }}>
         <Typography sx={{ fontWeight: 700, fontSize: '1.05rem', mb: 0.5 }}>Datos para recibir el pago</Typography>
         <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3 }}>
-          Son los datos que va a ver el locatario para transferir el alquiler de este contrato. Pod&eacute;s usar una cuenta distinta para cada contrato.
+          Son los datos que va a ver el locatario para transferir el alquiler de este contrato. Podés usar una cuenta distinta para cada contrato.
         </Typography>
 
         <Box component="form" onSubmit={handlePaySubmit(onPaymentAccount)} noValidate>
@@ -410,7 +410,7 @@ export default function LeaseConfirmPage() {
               <TextField fullWidth label="Banco o billetera" {...regPay('bank', { required: true })} />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField fullWidth label="CBU o CVU" {...regPay('cbuOrCvu', { required: true })} helperText="22 d\u00EDgitos" />
+              <TextField fullWidth label="CBU o CVU" {...regPay('cbuOrCvu', { required: true })} helperText="22 dígitos" />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField fullWidth label="Alias" {...regPay('alias')} />

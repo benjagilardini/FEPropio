@@ -20,7 +20,7 @@ import type { Unit } from '../../types';
 function formatAddress(unit: Unit): string {
   const a = unit.address;
   let addr = `${a.street} ${a.number}`;
-  if (a.floor) addr += `, ${a.floor}.\u00B0`;
+  if (a.floor) addr += `, ${a.floor}.°`;
   if (a.apartment) addr += ` ${a.apartment}`;
   return addr;
 }
@@ -61,9 +61,9 @@ export default function AdjustmentPage() {
   const handleNotify = async () => {
     try {
       await notifyMut.mutateAsync({ leaseId: leaseId!, adjustmentId: adjustmentId! });
-      toast.success('Notificaci\u00F3n enviada al inquilino');
+      toast.success('Notificación enviada al inquilino');
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Error al enviar la notificaci\u00F3n');
+      toast.error(err.response?.data?.message || 'Error al enviar la notificación');
     }
   };
 
@@ -100,7 +100,7 @@ export default function AdjustmentPage() {
           </Box>
           {lease && (
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              {lease.tenantName ? `Locatario: ${lease.tenantName} \u00B7 ` : ''}
+              {lease.tenantName ? `Locatario: ${lease.tenantName} · ` : ''}
               {lease.adjustmentIndex} {formatFreq(lease.adjustmentFrequencyMonths)}
             </Typography>
           )}
@@ -138,8 +138,8 @@ export default function AdjustmentPage() {
             {adjustment.minCoefficient && adjustment.maxCoefficient
               ? adjustment.minCoefficient === adjustment.maxCoefficient
                 ? formatPercentage(adjustment.maxCoefficient)
-                : `${formatPercentage(adjustment.minCoefficient)} \u2013 ${formatPercentage(adjustment.maxCoefficient)}`
-              : '\u2014'}
+                : `${formatPercentage(adjustment.minCoefficient)} – ${formatPercentage(adjustment.maxCoefficient)}`
+              : '—'}
           </Typography>
         </Paper>
         <Paper variant="outlined" sx={{ p: 2.5, borderColor: 'divider' }}>
@@ -149,9 +149,9 @@ export default function AdjustmentPage() {
           <Typography sx={{ fontWeight: 700, fontSize: '1.15rem', mt: 0.5 }}>
             {adjustment.minAmount && adjustment.maxAmount
               ? hasRange
-                ? `${formatCurrency(adjustment.minAmount)} \u2013 ${formatCurrency(adjustment.maxAmount)}`
+                ? `${formatCurrency(adjustment.minAmount)} – ${formatCurrency(adjustment.maxAmount)}`
                 : formatCurrency(adjustment.maxAmount)
-              : '\u2014'}
+              : '—'}
           </Typography>
         </Paper>
       </Box>
@@ -249,7 +249,7 @@ export default function AdjustmentPage() {
             >
               <InfoOutlinedIcon sx={{ fontSize: 20, mt: 0.25 }} />
               <Typography variant="body2">
-                Dato pendiente: {lease?.adjustmentIndex || '\u00CDndice'} de{' '}
+                Dato pendiente: {lease?.adjustmentIndex || 'Índice'} de{' '}
                 {adjustment.pendingPeriods.join(', ')}.
                 Al publicarse, el monto pasa a ser definitivo y se notifica al locatario.
               </Typography>
@@ -263,16 +263,16 @@ export default function AdjustmentPage() {
         {/* Left: Calculation detail */}
         <Paper variant="outlined" sx={{ borderColor: 'divider', overflow: 'hidden' }}>
           <Box sx={{ p: 3, pb: 0 }}>
-            <Typography sx={sectionTitle}>Detalle del c&aacute;lculo</Typography>
+            <Typography sx={sectionTitle}>Detalle del cálculo</Typography>
           </Box>
           {adjustment.pendingPeriods.length > 0 || adjustment.startIndexValue ? (
             <TableContainer>
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={headerCellSx}>Per&iacute;odo</TableCell>
+                    <TableCell sx={headerCellSx}>Período</TableCell>
                     <TableCell sx={headerCellSx}>
-                      Variaci&oacute;n mensual ({lease?.adjustmentIndex || '\u00CDndice'})
+                      Variación mensual ({lease?.adjustmentIndex || 'Índice'})
                     </TableCell>
                     <TableCell sx={headerCellSx}>Estado</TableCell>
                   </TableRow>
@@ -282,7 +282,7 @@ export default function AdjustmentPage() {
                   {adjustment.startIndexValue && (
                     <TableRow>
                       <TableCell>
-                        <Typography variant="body2">\u00CDndice base</Typography>
+                        <Typography variant="body2">Índice base</Typography>
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2">{adjustment.startIndexValue}</Typography>
@@ -295,7 +295,7 @@ export default function AdjustmentPage() {
                   {adjustment.endIndexValue && (
                     <TableRow>
                       <TableCell>
-                        <Typography variant="body2">\u00CDndice final</Typography>
+                        <Typography variant="body2">Índice final</Typography>
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2">{adjustment.endIndexValue}</Typography>
@@ -312,7 +312,7 @@ export default function AdjustmentPage() {
                         <Typography variant="body2">{period}</Typography>
                       </TableCell>
                       <TableCell>
-                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>\u2014</Typography>
+                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>—</Typography>
                       </TableCell>
                       <TableCell>
                         <StatusChip status="pending" variant="outlined" />
@@ -325,7 +325,7 @@ export default function AdjustmentPage() {
           ) : (
             <Box sx={{ px: 3, pb: 3 }}>
               <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                El detalle del c&aacute;lculo estar&aacute; disponible cuando se publiquen los datos del &iacute;ndice.
+                El detalle del cálculo estará disponible cuando se publiquen los datos del índice.
               </Typography>
             </Box>
           )}
@@ -342,14 +342,14 @@ export default function AdjustmentPage() {
                 <EmailOutlinedIcon sx={{ color: 'primary.main', fontSize: 20, mt: 0.25 }} />
                 <Box>
                   <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                    {isEstimated ? 'Estimaci\u00F3n actualizada' : 'Ajuste definitivo'}
+                    {isEstimated ? 'Estimación actualizada' : 'Ajuste definitivo'}
                   </Typography>
                   <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                     {hasRange
-                      ? `Rango ${formatCurrency(adjustment.minAmount!)} \u2013 ${formatCurrency(adjustment.maxAmount!)}`
+                      ? `Rango ${formatCurrency(adjustment.minAmount!)} – ${formatCurrency(adjustment.maxAmount!)}`
                       : adjustment.maxAmount
                         ? `${formatCurrency(adjustment.maxAmount)} desde el ${formatDate(adjustment.effectiveDate)}`
-                        : 'Pendiente de c\u00E1lculo'}
+                        : 'Pendiente de cálculo'}
                   </Typography>
                   {adjustment.updatedAt && (
                     <Typography variant="caption" sx={{ display: 'block', color: 'text.disabled' }}>

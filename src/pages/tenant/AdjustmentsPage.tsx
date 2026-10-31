@@ -23,7 +23,7 @@ export default function AdjustmentsPage() {
   const { data, isLoading } = useAdjustments(activeLease?.id || '', page);
 
   if (leasesLoading || isLoading) return <LoadingSpinner />;
-  if (!activeLease) return <EmptyState message="No tenes un contrato activo." />;
+  if (!activeLease) return <EmptyState message="No tenés un contrato activo." />;
 
   const adjustments = data?.data || [];
   const totalPages = data?.pagination?.totalPages || 1;

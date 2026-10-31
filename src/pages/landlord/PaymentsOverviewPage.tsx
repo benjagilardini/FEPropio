@@ -19,7 +19,7 @@ import type { Unit } from '../../types';
 function formatAddress(unit: Unit): string {
   const a = unit.address;
   let addr = `${a.street} ${a.number}`;
-  if (a.floor) addr += `, ${a.floor}.\u00B0`;
+  if (a.floor) addr += `, ${a.floor}.°`;
   if (a.apartment) addr += ` ${a.apartment}`;
   return addr;
 }
@@ -92,7 +92,7 @@ export default function PaymentsOverviewPage() {
       {occupiedUnits.length === 0 ? (
         <EmptyState
           message="No hay unidades con contratos activos"
-          description="Cuando tengas unidades ocupadas con contratos vigentes, vas a poder revisar los comprobantes de pago aca."
+          description="Cuando tengas unidades ocupadas con contratos vigentes, vas a poder revisar los comprobantes de pago acá."
         />
       ) : (
         <>
@@ -110,7 +110,7 @@ export default function PaymentsOverviewPage() {
             {occupiedUnits.map((unit) => (
               <MenuItem key={unit.id} value={unit.id}>
                 {formatAddress(unit)}
-                {unit.tenant?.name ? ` \u2014 ${unit.tenant.name}` : ''}
+                {unit.tenant?.name ? ` — ${unit.tenant.name}` : ''}
               </MenuItem>
             ))}
           </TextField>
@@ -140,12 +140,12 @@ export default function PaymentsOverviewPage() {
                       <Table>
                         <TableHead>
                           <TableRow>
-                            <TableCell>Periodo</TableCell>
+                            <TableCell>Período</TableCell>
                             <TableCell>Importe</TableCell>
                             <TableCell>Esperado</TableCell>
                             <TableCell>Fecha de pago</TableCell>
                             <TableCell>Estado</TableCell>
-                            <TableCell>Observacion</TableCell>
+                            <TableCell>Observación</TableCell>
                             <TableCell>Acciones</TableCell>
                           </TableRow>
                         </TableHead>
@@ -204,7 +204,7 @@ export default function PaymentsOverviewPage() {
         <DialogContent>
           <TextField
             fullWidth
-            label="Observacion"
+            label="Observación"
             multiline
             rows={3}
             value={reviewNote}

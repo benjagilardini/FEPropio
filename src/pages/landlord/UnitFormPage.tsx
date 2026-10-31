@@ -27,11 +27,11 @@ const utilityTypes = [
 ];
 
 const accountLabel: Record<string, string> = {
-  electricity: 'N\u00B0 de contrato',
-  gas: 'N\u00B0 de cliente',
-  water: 'Unidad de facturaci\u00F3n',
+  electricity: 'N° de contrato',
+  gas: 'N° de cliente',
+  water: 'Unidad de facturación',
   condominiumFees: 'Unidad funcional',
-  propertyTax: 'N\u00B0 de cuenta',
+  propertyTax: 'N° de cuenta',
 };
 
 const sectionSx = {
@@ -96,7 +96,7 @@ export default function UnitFormPage() {
   const buildAddressPreview = () => {
     const a = watch('address');
     const parts = [`${a.street} ${a.number}`.trim()];
-    if (a.floor) parts.push(`${a.floor}\u00B0`);
+    if (a.floor) parts.push(`${a.floor}°`);
     if (a.apartment) parts.push(a.apartment);
     return parts.filter(Boolean).join(', ');
   };
@@ -123,7 +123,7 @@ export default function UnitFormPage() {
         {isEdit ? 'Editar unidad' : 'Nueva unidad'}
       </Typography>
       <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3 }}>
-        Los datos t&eacute;cnicos y administrativos quedan asociados a la unidad, est&eacute; ocupada o vacante.
+        Los datos técnicos y administrativos quedan asociados a la unidad, esté ocupada o vacante.
       </Typography>
 
       <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
@@ -137,7 +137,7 @@ export default function UnitFormPage() {
               {/* Address — single visual row */}
               <TextField
                 fullWidth
-                label="Direcci\u00F3n"
+                label="Dirección"
                 placeholder="Ej: Rondeau 215, PB 1"
                 sx={{ mb: 2 }}
                 {...register('address.street', { required: true })}
@@ -149,7 +149,7 @@ export default function UnitFormPage() {
               {/* Hidden-ish row for number/floor/apt (compact) */}
               <Grid container spacing={2} sx={{ mb: 2 }}>
                 <Grid size={{ xs: 4 }}>
-                  <TextField fullWidth label="N\u00FAmero" {...register('address.number', { required: true })} />
+                  <TextField fullWidth label="Número" {...register('address.number', { required: true })} />
                 </Grid>
                 <Grid size={{ xs: 4 }}>
                   <TextField fullWidth label="Piso" {...register('address.floor')} />
@@ -172,7 +172,7 @@ export default function UnitFormPage() {
                   />
                 </Grid>
                 <Grid size={{ xs: 6 }}>
-                  <TextField fullWidth label="Superficie (m\u00B2)" type="number" {...register('areaSqm', { valueAsNumber: true })} />
+                  <TextField fullWidth label="Superficie (m²)" type="number" {...register('areaSqm', { valueAsNumber: true })} />
                 </Grid>
                 <Grid size={{ xs: 6 }}>
                   <TextField fullWidth label="Partida inmobiliaria" {...register('propertyTaxAccount')} />
@@ -185,7 +185,7 @@ export default function UnitFormPage() {
 
             {/* Facility locations */}
             <Paper variant="outlined" sx={{ p: 3, borderColor: 'divider' }}>
-              <Typography sx={sectionSx}>Ubicaci&oacute;n de instalaciones</Typography>
+              <Typography sx={sectionSx}>Ubicación de instalaciones</Typography>
               <Grid container spacing={2}>
                 <Grid size={{ xs: 6 }}>
                   <TextField fullWidth label="Llave de paso de agua" {...register('facilities.waterShutoff')} />
@@ -194,7 +194,7 @@ export default function UnitFormPage() {
                   <TextField fullWidth label="Llave de gas" {...register('facilities.gasShutoff')} />
                 </Grid>
                 <Grid size={{ xs: 6 }}>
-                  <TextField fullWidth label="Tablero el&eacute;ctrico" {...register('facilities.electricalPanel')} />
+                  <TextField fullWidth label="Tablero eléctrico" {...register('facilities.electricalPanel')} />
                 </Grid>
                 <Grid size={{ xs: 6 }}>
                   <TextField fullWidth label="Medidores" {...register('facilities.meters')} />
@@ -228,7 +228,7 @@ export default function UnitFormPage() {
                         />
                         <TextField
                           fullWidth
-                          label={accountLabel[utilityType] || 'N\u00B0 de cuenta'}
+                          label={accountLabel[utilityType] || 'N° de cuenta'}
                           {...register(`utilityAccounts.${index}.accountId`)}
                         />
                         {/* Hidden utility type selector */}
@@ -270,7 +270,7 @@ export default function UnitFormPage() {
                 fullWidth
                 label="Valor de referencia ($)"
                 {...register('referenceValue')}
-                helperText="Lo defin&iacute;s vos. Se usa para calcular el rendimiento."
+                helperText="Lo definís vos. Se usa para calcular el rendimiento."
               />
             </Paper>
           </Box>

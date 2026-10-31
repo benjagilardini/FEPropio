@@ -44,7 +44,7 @@ export default function TenantMaintenancePage() {
   });
 
   if (leasesLoading || isLoading) return <LoadingSpinner />;
-  if (!activeLease) return <EmptyState message="No tenes un contrato activo." />;
+  if (!activeLease) return <EmptyState message="No tenés un contrato activo." />;
 
   const requests = data?.data || [];
   const totalPages = data?.pagination?.totalPages || 1;
@@ -82,7 +82,7 @@ export default function TenantMaintenancePage() {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>Codigo</TableCell>
+                  <TableCell>Código</TableCell>
                   <TableCell>Categoria</TableCell>
                   <TableCell>Ambiente</TableCell>
                   <TableCell>Estado</TableCell>

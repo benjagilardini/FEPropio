@@ -34,7 +34,7 @@ const utilityTypeLabels: Record<string, string> = {
 const accountPrefix: Record<string, string> = {
   electricity: 'Contrato',
   gas: 'Cliente',
-  water: 'U. de facturaci\u00F3n',
+  water: 'U. de facturación',
   condominiumFees: 'Consorcio',
   propertyTax: 'Partida',
 };
@@ -42,7 +42,7 @@ const accountPrefix: Record<string, string> = {
 function formatFullAddress(unit: Unit): string {
   const a = unit.address;
   let addr = `${a.street} ${a.number}`;
-  if (a.floor) addr += `, ${a.floor}.\u00B0`;
+  if (a.floor) addr += `, ${a.floor}.°`;
   if (a.apartment) addr += ` ${a.apartment}`;
   return addr;
 }
@@ -155,7 +155,7 @@ export default function UnitDetailPage() {
           <Paper variant="outlined" sx={{ p: 3, borderColor: 'divider' }}>
             <Typography sx={sectionTitle}>Datos administrativos</Typography>
             <KVRow label="Tipo de unidad" value={unitTypeLabels[unit.unitType] || unit.unitType} />
-            <KVRow label="Superficie" value={unit.areaSqm ? `${unit.areaSqm} m\u00B2` : undefined} />
+            <KVRow label="Superficie" value={unit.areaSqm ? `${unit.areaSqm} m²` : undefined} />
             <KVRow label="Unidad funcional" value={unit.functionalUnit ? `UF ${unit.functionalUnit}` : undefined} />
             <KVRow label="Partida inmobiliaria" value={unit.propertyTaxAccount} />
             <KVRow label="Valor de referencia" value={unit.referenceValue ? `${formatCurrency(unit.referenceValue)} (editable)` : undefined} />
@@ -163,10 +163,10 @@ export default function UnitDetailPage() {
 
           {unit.facilities && (
             <Paper variant="outlined" sx={{ p: 3, borderColor: 'divider' }}>
-              <Typography sx={sectionTitle}>Ubicaci&oacute;n de instalaciones</Typography>
+              <Typography sx={sectionTitle}>Ubicación de instalaciones</Typography>
               <KVRow label="Llave de paso de agua" value={unit.facilities.waterShutoff} />
               <KVRow label="Llave de gas" value={unit.facilities.gasShutoff} />
-              <KVRow label="Tablero el&eacute;ctrico" value={unit.facilities.electricalPanel} />
+              <KVRow label="Tablero eléctrico" value={unit.facilities.electricalPanel} />
               <KVRow label="Medidores" value={unit.facilities.meters} />
             </Paper>
           )}
@@ -198,7 +198,7 @@ export default function UnitDetailPage() {
                       {lease.tenantName || 'Sin inquilino'}
                     </Typography>
                     <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                      {formatDate(lease.startDate)} {'\u2013'} {formatDate(lease.endDate)} {'\u00B7'} {lease.adjustmentIndex} {formatFreq(lease.adjustmentFrequencyMonths)}
+                      {formatDate(lease.startDate)} {'–'} {formatDate(lease.endDate)} {'·'} {lease.adjustmentIndex} {formatFreq(lease.adjustmentFrequencyMonths)}
                     </Typography>
                   </Box>
                   <Box sx={{ mx: 1 }}>
@@ -217,10 +217,10 @@ export default function UnitDetailPage() {
             <Typography sx={sectionTitle}>Contrato vigente</Typography>
             {activeLease ? (
               <>
-                <KVRow label="Locataria" value={activeLease.tenantName || '\u2014'} />
-                <KVRow label="Vigencia" value={`${formatDate(activeLease.startDate)} \u2013 ${formatDate(activeLease.endDate)}`} />
+                <KVRow label="Locataria" value={activeLease.tenantName || '—'} />
+                <KVRow label="Vigencia" value={`${formatDate(activeLease.startDate)} – ${formatDate(activeLease.endDate)}`} />
                 <KVRow label="Alquiler vigente" value={unit.currentRent ? formatCurrency(unit.currentRent) : formatCurrency(activeLease.initialRent)} />
-                <KVRow label="\u00CDndice" value={`${activeLease.adjustmentIndex} \u00B7 ${formatFreq(activeLease.adjustmentFrequencyMonths)}`} />
+                <KVRow label="Índice" value={`${activeLease.adjustmentIndex} · ${formatFreq(activeLease.adjustmentFrequencyMonths)}`} />
                 {activeLease.paymentAccount?.alias && (
                   <KVRow label="Alias de cobro" value={activeLease.paymentAccount.alias} />
                 )}
@@ -244,7 +244,7 @@ export default function UnitDetailPage() {
                     onClick={() => navigate(`/leases/${activeLease.id}/adjustments/${activeLease.id}`)}
                     sx={{ textTransform: 'uppercase', justifyContent: 'center' }}
                   >
-                    Ver actualizaci&oacute;n
+                    Ver actualización
                   </Button>
                   <Button
                     fullWidth
@@ -280,7 +280,7 @@ export default function UnitDetailPage() {
                 <KVRow
                   key={i}
                   label={ua.provider || utilityTypeLabels[ua.utilityType] || ua.utilityType}
-                  value={ua.accountId ? `${accountPrefix[ua.utilityType] || 'Cuenta'} ${ua.accountId}` : '\u2014'}
+                  value={ua.accountId ? `${accountPrefix[ua.utilityType] || 'Cuenta'} ${ua.accountId}` : '—'}
                 />
               ))
             ) : (
@@ -295,7 +295,7 @@ export default function UnitDetailPage() {
       <ConfirmDialog
         open={confirmDelete}
         title="Finalizar contrato"
-        message={'\u00BFEst\u00E1s seguro de que quer\u00E9s finalizar este contrato? Esta acci\u00F3n no se puede deshacer.'}
+        message={'¿Estás seguro de que querés finalizar este contrato? Esta acción no se puede deshacer.'}
         confirmLabel="Finalizar"
         onConfirm={handleDelete}
         onCancel={() => setConfirmDelete(false)}

@@ -25,7 +25,7 @@ export default function UnitInfoPage() {
   });
 
   if (leasesLoading || unitLoading) return <LoadingSpinner />;
-  if (!unit) return <EmptyState message="No se encontro informacion de la vivienda." />;
+  if (!unit) return <EmptyState message="No se encontró información de la vivienda." />;
 
   const a = unit.address;
 
@@ -38,7 +38,7 @@ export default function UnitInfoPage() {
         <List dense>
           <ListItem>
             <ListItemText
-              primary="Direccion"
+              primary="Dirección"
               secondary={`${a.street} ${a.number}${a.floor ? `, Piso ${a.floor}` : ''}${a.apartment ? `, Depto ${a.apartment}` : ''} - ${a.city}, ${a.province}`}
             />
           </ListItem>
@@ -53,7 +53,7 @@ export default function UnitInfoPage() {
           <List dense>
             {unit.facilities.waterShutoff && <ListItem><ListItemText primary="Llave de paso de agua" secondary={unit.facilities.waterShutoff} /></ListItem>}
             {unit.facilities.gasShutoff && <ListItem><ListItemText primary="Llave de paso de gas" secondary={unit.facilities.gasShutoff} /></ListItem>}
-            {unit.facilities.electricalPanel && <ListItem><ListItemText primary="Tablero electrico" secondary={unit.facilities.electricalPanel} /></ListItem>}
+            {unit.facilities.electricalPanel && <ListItem><ListItemText primary="Tablero eléctrico" secondary={unit.facilities.electricalPanel} /></ListItem>}
             {unit.facilities.meters && <ListItem><ListItemText primary="Medidores" secondary={unit.facilities.meters} /></ListItem>}
           </List>
         </Paper>

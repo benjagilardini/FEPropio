@@ -72,7 +72,7 @@ export default function IndexComparisonOverviewPage() {
       {/* Content */}
       {!selectedUnitId && (
         <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>
-          Seleccion&aacute; una unidad para comparar indices.
+          Seleccioná una unidad para comparar indices.
         </Typography>
       )}
 

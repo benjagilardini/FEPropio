@@ -75,7 +75,7 @@ export default function MaintenancePage() {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>Codigo</TableCell>
+                  <TableCell>Código</TableCell>
                   <TableCell>Categoria</TableCell>
                   <TableCell>Ambiente</TableCell>
                   <TableCell>Estado</TableCell>

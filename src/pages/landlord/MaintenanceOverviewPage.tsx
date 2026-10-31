@@ -17,7 +17,7 @@ import type { MaintenanceStatus, Unit } from '../../types';
 function formatAddress(unit: Unit): string {
   const a = unit.address;
   let addr = `${a.street} ${a.number}`;
-  if (a.floor) addr += `, ${a.floor}.\u00B0`;
+  if (a.floor) addr += `, ${a.floor}.°`;
   if (a.apartment) addr += ` ${a.apartment}`;
   return addr;
 }
@@ -82,7 +82,7 @@ export default function MaintenanceOverviewPage() {
 
   function truncate(text: string, maxLen = 80): string {
     if (text.length <= maxLen) return text;
-    return text.slice(0, maxLen) + '\u2026';
+    return text.slice(0, maxLen) + '…';
   }
 
   return (
@@ -97,7 +97,7 @@ export default function MaintenanceOverviewPage() {
       {occupiedUnits.length === 0 ? (
         <EmptyState
           message="No hay unidades con contratos activos"
-          description="Cuando tengas unidades ocupadas con contratos vigentes, vas a poder ver los reclamos de mantenimiento aca."
+          description="Cuando tengas unidades ocupadas con contratos vigentes, vas a poder ver los reclamos de mantenimiento acá."
         />
       ) : (
         <>
@@ -115,7 +115,7 @@ export default function MaintenanceOverviewPage() {
             {occupiedUnits.map((unit) => (
               <MenuItem key={unit.id} value={unit.id}>
                 {formatAddress(unit)}
-                {unit.tenant?.name ? ` \u2014 ${unit.tenant.name}` : ''}
+                {unit.tenant?.name ? ` — ${unit.tenant.name}` : ''}
               </MenuItem>
             ))}
           </TextField>
@@ -145,7 +145,7 @@ export default function MaintenanceOverviewPage() {
                       <Table>
                         <TableHead>
                           <TableRow>
-                            <TableCell>Codigo</TableCell>
+                            <TableCell>Código</TableCell>
                             <TableCell>Unidad</TableCell>
                             <TableCell>Reclamo</TableCell>
                             <TableCell>Registrado</TableCell>

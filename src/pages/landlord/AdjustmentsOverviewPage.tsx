@@ -19,7 +19,7 @@ import type { Unit, Lease, RentAdjustment } from '../../types';
 function formatAddress(unit: Unit): string {
   const a = unit.address;
   let addr = `${a.street} ${a.number}`;
-  if (a.floor) addr += `, ${a.floor}.\u00B0`;
+  if (a.floor) addr += `, ${a.floor}.°`;
   if (a.apartment) addr += ` ${a.apartment}`;
   return addr;
 }
@@ -109,13 +109,13 @@ export default function AdjustmentsOverviewPage() {
       {/* Header */}
       <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>Actualizaciones</Typography>
       <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3 }}>
-        Pr&oacute;ximos ajustes de todas tus unidades, seg&uacute;n el &iacute;ndice y la periodicidad de cada contrato.
+        Próximos ajustes de todas tus unidades, según el índice y la periodicidad de cada contrato.
       </Typography>
 
       {occupiedUnits.length === 0 ? (
         <EmptyState
-          message="No hay ajustes pr\u00F3ximos"
-          description="Cuando tengas contratos activos con ajustes programados, aparecer\u00E1n aqu\u00ED."
+          message="No hay ajustes próximos"
+          description="Cuando tengas contratos activos con ajustes programados, aparecerán aquí."
         />
       ) : isLoading ? (
         <LoadingSpinner />
@@ -125,14 +125,14 @@ export default function AdjustmentsOverviewPage() {
           {upcomingRows.length > 0 && (
             <>
               <Typography sx={{ fontWeight: 700, fontSize: '1.05rem', mb: 2 }}>
-                Pr&oacute;ximos ajustes
+                Próximos ajustes
               </Typography>
               <TableContainer component={Paper} variant="outlined" sx={{ borderColor: 'divider', mb: 4 }}>
                 <Table>
                   <TableHead>
                     <TableRow>
                       <TableCell sx={headerCellSx}>Unidad</TableCell>
-                      <TableCell sx={headerCellSx}>&Iacute;ndice</TableCell>
+                      <TableCell sx={headerCellSx}>Índice</TableCell>
                       <TableCell sx={headerCellSx}>Fecha</TableCell>
                       <TableCell sx={headerCellSx}>Alquiler vigente</TableCell>
                       <TableCell sx={headerCellSx}>Nuevo alquiler</TableCell>
@@ -160,7 +160,7 @@ export default function AdjustmentsOverviewPage() {
                         </TableCell>
                         <TableCell>
                           <Typography variant="body2">
-                            {row.lease.adjustmentIndex} &middot; {formatFreq(row.lease.adjustmentFrequencyMonths)}
+                            {row.lease.adjustmentIndex} · {formatFreq(row.lease.adjustmentFrequencyMonths)}
                           </Typography>
                         </TableCell>
                         <TableCell>{formatDate(row.adjustment.effectiveDate)}</TableCell>
@@ -169,8 +169,8 @@ export default function AdjustmentsOverviewPage() {
                           {row.adjustment.minAmount && row.adjustment.maxAmount
                             ? row.adjustment.minAmount === row.adjustment.maxAmount
                               ? formatCurrency(row.adjustment.maxAmount)
-                              : `${formatCurrency(row.adjustment.minAmount)} \u2013 ${formatCurrency(row.adjustment.maxAmount)}`
-                            : '\u2014'}
+                              : `${formatCurrency(row.adjustment.minAmount)} – ${formatCurrency(row.adjustment.maxAmount)}`
+                            : '—'}
                         </TableCell>
                         <TableCell>
                           <StatusChip status={row.adjustment.status} />
@@ -197,11 +197,11 @@ export default function AdjustmentsOverviewPage() {
                   <TableHead>
                     <TableRow>
                       <TableCell sx={headerCellSx}>Unidad</TableCell>
-                      <TableCell sx={headerCellSx}>&Iacute;ndice</TableCell>
+                      <TableCell sx={headerCellSx}>Índice</TableCell>
                       <TableCell sx={headerCellSx}>Fecha</TableCell>
                       <TableCell sx={headerCellSx}>Alquiler anterior</TableCell>
                       <TableCell sx={headerCellSx}>Alquiler nuevo</TableCell>
-                      <TableCell sx={headerCellSx}>Notificaci&oacute;n</TableCell>
+                      <TableCell sx={headerCellSx}>Notificación</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -224,13 +224,13 @@ export default function AdjustmentsOverviewPage() {
                         </TableCell>
                         <TableCell>
                           <Typography variant="body2">
-                            {row.lease.adjustmentIndex} &middot; {formatFreq(row.lease.adjustmentFrequencyMonths)}
+                            {row.lease.adjustmentIndex} · {formatFreq(row.lease.adjustmentFrequencyMonths)}
                           </Typography>
                         </TableCell>
                         <TableCell>{formatDate(row.adjustment.effectiveDate)}</TableCell>
                         <TableCell>{formatCurrency(row.adjustment.previousRent)}</TableCell>
                         <TableCell>
-                          {row.adjustment.maxAmount ? formatCurrency(row.adjustment.maxAmount) : '\u2014'}
+                          {row.adjustment.maxAmount ? formatCurrency(row.adjustment.maxAmount) : '—'}
                         </TableCell>
                         <TableCell>
                           {row.adjustment.updatedAt && (
@@ -251,7 +251,7 @@ export default function AdjustmentsOverviewPage() {
           {upcomingRows.length === 0 && appliedRows.length === 0 && (
             <EmptyState
               message="No hay ajustes registrados"
-              description="Los ajustes se generar\u00E1n autom\u00E1ticamente seg\u00FAn el \u00EDndice y la periodicidad de cada contrato."
+              description="Los ajustes se generarán automáticamente según el índice y la periodicidad de cada contrato."
             />
           )}
 
@@ -270,7 +270,7 @@ export default function AdjustmentsOverviewPage() {
           >
             <InfoOutlinedIcon sx={{ fontSize: 20, mt: 0.25 }} />
             <Typography variant="body2">
-              Mientras el \u00EDndice no est\u00E9 publicado en su totalidad, el nuevo alquiler se muestra como un rango que se reduce a medida que se difunden los datos faltantes.
+              Mientras el índice no esté publicado en su totalidad, el nuevo alquiler se muestra como un rango que se reduce a medida que se difunden los datos faltantes.
             </Typography>
           </Box>
         </>

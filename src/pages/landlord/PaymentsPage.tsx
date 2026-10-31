@@ -64,12 +64,12 @@ export default function PaymentsPage() {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>Periodo</TableCell>
+                  <TableCell>Período</TableCell>
                   <TableCell>Importe</TableCell>
                   <TableCell>Esperado</TableCell>
                   <TableCell>Fecha de pago</TableCell>
                   <TableCell>Estado</TableCell>
-                  <TableCell>Observacion</TableCell>
+                  <TableCell>Observación</TableCell>
                   <TableCell>Acciones</TableCell>
                 </TableRow>
               </TableHead>
@@ -117,7 +117,7 @@ export default function PaymentsPage() {
         <DialogTitle>Observar comprobante</DialogTitle>
         <DialogContent>
           <TextField
-            fullWidth label="Observacion" multiline rows={3}
+            fullWidth label="Observación" multiline rows={3}
             value={reviewNote} onChange={(e) => setReviewNote(e.target.value)}
             sx={{ mt: 1 }}
           />

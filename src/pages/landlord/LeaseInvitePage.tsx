@@ -15,9 +15,9 @@ import LoadingSpinner from '../../components/common/LoadingSpinner';
 const steps = ['Cargar documento', 'Confirmar datos', 'Habilitar acceso al locatario'];
 
 const accessItems = [
-  'Ficha t\u00E9cnica de la unidad y suministros',
+  'Ficha técnica de la unidad y suministros',
   'Contrato y documento original',
-  'Estimaci\u00F3n del pr\u00F3ximo ajuste',
+  'Estimación del próximo ajuste',
   'Carga de comprobantes de pago',
   'Reclamos de mantenimiento con seguimiento',
 ];
@@ -44,12 +44,12 @@ export default function LeaseInvitePage() {
   const tenantDni = lease.tenantDni || '';
 
   const unitAddress = unit
-    ? `${unit.address.street} ${unit.address.number}${unit.address.floor ? `, ${unit.address.floor}.\u00B0` : ''}${unit.address.apartment ? ` ${unit.address.apartment}` : ''}`
+    ? `${unit.address.street} ${unit.address.number}${unit.address.floor ? `, ${unit.address.floor}.°` : ''}${unit.address.apartment ? ` ${unit.address.apartment}` : ''}`
     : '';
 
   const handleInvite = async () => {
     if (!email) {
-      setError('Ingres\u00E1 el correo electr\u00F3nico del locatario.');
+      setError('Ingresá el correo electrónico del locatario.');
       return;
     }
     try {
@@ -88,7 +88,7 @@ export default function LeaseInvitePage() {
         Habilitar acceso al locatario
       </Typography>
       <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-        Contrato registrado. Invit&aacute; al locatario para que acceda a la informaci&oacute;n de la unidad.
+        Contrato registrado. Invitá al locatario para que acceda a la información de la unidad.
       </Typography>
 
       {/* Stepper */}
@@ -101,7 +101,7 @@ export default function LeaseInvitePage() {
       </Stepper>
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-      {sent && <Alert severity="success" sx={{ mb: 2 }}>Invitaci&oacute;n enviada correctamente.</Alert>}
+      {sent && <Alert severity="success" sx={{ mb: 2 }}>Invitación enviada correctamente.</Alert>}
 
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3, alignItems: 'start' }}>
         {/* Left: Tenant data */}
@@ -135,7 +135,7 @@ export default function LeaseInvitePage() {
             <Grid size={12}>
               <TextField
                 fullWidth
-                label="Correo electr\u00F3nico"
+                label="Correo electrónico"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -162,7 +162,7 @@ export default function LeaseInvitePage() {
           >
             <InfoOutlinedIcon sx={{ fontSize: 20, mt: 0.25 }} />
             <Typography variant="body2">
-              El acceso queda habilitado mientras el contrato est&eacute; vigente ({formatDate(lease.startDate)} &ndash; {formatDate(lease.endDate)}).
+              El acceso queda habilitado mientras el contrato esté vigente ({formatDate(lease.startDate)} – {formatDate(lease.endDate)}).
               Al finalizar, pasa a solo lectura: contrato e historial.
             </Typography>
           </Box>
@@ -171,7 +171,7 @@ export default function LeaseInvitePage() {
         {/* Right: What they can see */}
         <Paper variant="outlined" sx={{ p: 3, borderColor: 'divider' }}>
           <Typography sx={{ fontWeight: 700, fontSize: '1.05rem', mb: 2 }}>
-            Qu&eacute; va a poder ver
+            Qué va a poder ver
           </Typography>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
             {accessItems.map((item) => (
@@ -198,7 +198,7 @@ export default function LeaseInvitePage() {
           onClick={handleInvite}
           disabled={inviteMut.isPending || sent}
         >
-          {inviteMut.isPending ? 'Enviando...' : 'Enviar invitaci\u00F3n'}
+          {inviteMut.isPending ? 'Enviando...' : 'Enviar invitación'}
         </Button>
       </Box>
     </Box>

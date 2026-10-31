@@ -13,7 +13,7 @@ export default function LeasePage() {
   if (isLoading) return <LoadingSpinner />;
 
   const lease = leases?.find((l) => l.status === 'active') || leases?.[0];
-  if (!lease) return <EmptyState message="No tenes un contrato asociado." />;
+  if (!lease) return <EmptyState message="No tenés un contrato asociado." />;
 
   const handleDownload = async () => {
     try {

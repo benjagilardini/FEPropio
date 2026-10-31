@@ -80,7 +80,7 @@ export default function YieldOverviewPage() {
       {/* Content */}
       {!selectedUnitId && (
         <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>
-          Seleccion&aacute; una unidad para ver su rendimiento.
+          Seleccioná una unidad para ver su rendimiento.
         </Typography>
       )}
 
@@ -130,7 +130,7 @@ export default function YieldOverviewPage() {
                   <Table size="small">
                     <TableHead>
                       <TableRow>
-                        <TableCell>Periodo</TableCell>
+                        <TableCell>Período</TableCell>
                         <TableCell align="right">Ingresos</TableCell>
                         <TableCell align="right">Gastos</TableCell>
                         <TableCell align="right">Neto</TableCell>

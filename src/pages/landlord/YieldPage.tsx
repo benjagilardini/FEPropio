@@ -52,7 +52,7 @@ export default function YieldPage() {
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell>Periodo</TableCell>
+                    <TableCell>Período</TableCell>
                     <TableCell align="right">Ingresos</TableCell>
                     <TableCell align="right">Gastos</TableCell>
                     <TableCell align="right">Neto</TableCell>

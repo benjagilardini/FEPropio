@@ -20,7 +20,7 @@ import type { Unit } from '../../types';
 function formatAddress(unit: Unit): string {
   const a = unit.address;
   let addr = `${a.street} ${a.number}`;
-  if (a.floor) addr += `, ${a.floor}.\u00B0`;
+  if (a.floor) addr += `, ${a.floor}.°`;
   if (a.apartment) addr += ` ${a.apartment}`;
   return addr;
 }
@@ -29,7 +29,7 @@ function formatAddressSecondary(unit: Unit): string | null {
   const parts: string[] = [];
   if (unit.address.neighborhood) parts.push(unit.address.neighborhood);
   if (unit.functionalUnit) parts.push(`UF ${unit.functionalUnit}`);
-  return parts.length > 0 ? parts.join(' \u00B7 ') : null;
+  return parts.length > 0 ? parts.join(' · ') : null;
 }
 
 const statCards = [
@@ -77,7 +77,7 @@ export default function UnitsPage() {
 
       {units.length === 0 ? (
         <EmptyState
-          message="No tenes unidades cargadas"
+          message="No tenés unidades cargadas"
           description="Crea tu primera unidad para comenzar a gestionar tus alquileres."
           action={
             <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate('/units/new')}>
@@ -149,7 +149,7 @@ export default function UnitsPage() {
                     Alquiler vigente
                   </TableCell>
                   <TableCell sx={{ color: 'text.secondary', fontWeight: 600, fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Pr&oacute;ximo ajuste
+                    Próximo ajuste
                   </TableCell>
                   <TableCell sx={{ width: 48 }} />
                 </TableRow>
@@ -185,17 +185,17 @@ export default function UnitsPage() {
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2" sx={{ color: isOccupied && unit.tenant?.name ? 'text.primary' : 'text.disabled' }}>
-                          {isOccupied && unit.tenant?.name ? unit.tenant.name : '\u2014'}
+                          {isOccupied && unit.tenant?.name ? unit.tenant.name : '—'}
                         </Typography>
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2" sx={{ fontWeight: isOccupied && unit.currentRent ? 500 : 400, color: isOccupied && unit.currentRent ? 'text.primary' : 'text.disabled' }}>
-                          {isOccupied && unit.currentRent ? formatCurrency(unit.currentRent) : '\u2014'}
+                          {isOccupied && unit.currentRent ? formatCurrency(unit.currentRent) : '—'}
                         </Typography>
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2" sx={{ color: 'text.disabled' }}>
-                          {'\u2014'}
+                          {'—'}
                         </Typography>
                       </TableCell>
                       <TableCell>

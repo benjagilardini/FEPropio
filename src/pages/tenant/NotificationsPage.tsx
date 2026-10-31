@@ -34,7 +34,7 @@ export default function NotificationsPage() {
       </Box>
 
       {notifications.length === 0 ? (
-        <EmptyState message="No tenes notificaciones." />
+        <EmptyState message="No tenés notificaciones." />
       ) : (
         <>
           <Paper>
