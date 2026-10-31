@@ -130,7 +130,7 @@ export default function Layout() {
           )}
           <ApartmentIcon sx={{ mr: 1 }} />
           <Typography variant="h6" noWrap sx={{ flexGrow: 1 }}>
-            Mis Inmuebles
+            Propio
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Avatar sx={{ bgcolor: 'primary.dark', width: 36, height: 36, fontSize: '0.875rem' }}>

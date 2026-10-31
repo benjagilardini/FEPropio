@@ -32,7 +32,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
       >
         <ApartmentIcon sx={{ fontSize: 56, color: 'white', mb: 2 }} />
         <Typography variant="h4" sx={{ color: 'white', fontWeight: 700, mb: 1 }}>
-          Mis Inmuebles
+          Propio
         </Typography>
         <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.85)', mb: 5 }}>
           Administrá tus unidades en alquiler sin intermediarios.
