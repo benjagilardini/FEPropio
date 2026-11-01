@@ -25,15 +25,8 @@ const ExpensesPage = lazy(() => import('../pages/landlord/ExpensesPage'));
 const UnitYieldPage = lazy(() => import('../pages/landlord/YieldPage'));
 
 // Top-level overview pages (sidebar)
-const AdjustmentsOverviewPage = lazy(() => import('../pages/landlord/AdjustmentsOverviewPage'));
-const PaymentsOverviewPage = lazy(() => import('../pages/landlord/PaymentsOverviewPage'));
-const MaintenanceOverviewPage = lazy(() => import('../pages/landlord/MaintenanceOverviewPage'));
 const YieldOverviewPage = lazy(() => import('../pages/landlord/YieldOverviewPage'));
 const IndexComparisonOverviewPage = lazy(() => import('../pages/landlord/IndexComparisonOverviewPage'));
-
-// Account & notifications
-const NotificationsPage = lazy(() => import('../pages/tenant/NotificationsPage'));
-const AccountPage = lazy(() => import('../pages/landlord/AccountPage'));
 
 export const landlordRoutes = (
   <Route element={<ProtectedRoute role="landlord" />}>
@@ -57,15 +50,8 @@ export const landlordRoutes = (
       <Route path="/leases/:leaseId/index-comparison" element={<LeaseIndexComparisonPage />} />
 
       {/* Sidebar overview pages */}
-      <Route path="/adjustments" element={<AdjustmentsOverviewPage />} />
-      <Route path="/payments" element={<PaymentsOverviewPage />} />
-      <Route path="/maintenance" element={<MaintenanceOverviewPage />} />
       <Route path="/yield" element={<YieldOverviewPage />} />
       <Route path="/index-comparison" element={<IndexComparisonOverviewPage />} />
-
-      {/* Account & notifications */}
-      <Route path="/notifications" element={<NotificationsPage />} />
-      <Route path="/account" element={<AccountPage />} />
     </Route>
   </Route>
 );

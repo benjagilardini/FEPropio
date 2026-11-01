@@ -9,6 +9,7 @@ import LoadingSpinner from './components/common/LoadingSpinner';
 import { authRoutes } from './routes/authRoutes';
 import { landlordRoutes } from './routes/landlordRoutes';
 import { tenantRoutes } from './routes/tenantRoutes';
+import { sharedRoutes } from './routes/sharedRoutes';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -40,6 +41,7 @@ function App() {
                 {authRoutes}
                 {landlordRoutes}
                 {tenantRoutes}
+                {sharedRoutes}
                 <Route path="/" element={<RoleBasedRedirect />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>

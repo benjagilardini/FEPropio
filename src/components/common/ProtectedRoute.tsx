@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import LoadingSpinner from './LoadingSpinner';
 
 interface Props {
-  role: 'landlord' | 'tenant';
+  role?: 'landlord' | 'tenant';
 }
 
 export default function ProtectedRoute({ role }: Props) {
@@ -11,7 +11,7 @@ export default function ProtectedRoute({ role }: Props) {
 
   if (isLoading) return <LoadingSpinner />;
   if (!user) return <Navigate to="/login" replace />;
-  if (user.role !== role) return <Navigate to="/" replace />;
+  if (role && user.role !== role) return <Navigate to="/" replace />;
 
   return <Outlet />;
 }
