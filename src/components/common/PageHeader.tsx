@@ -11,11 +11,14 @@ interface PageHeaderProps {
 export default function PageHeader({ title, subtitle, chips, actions }: PageHeaderProps) {
   return (
     <Paper
-      variant="outlined"
+      elevation={0}
       sx={{
+        mx: -3,
         px: 3,
         py: 2,
         mb: 2,
+        borderRadius: 0,
+        borderBottom: '1px solid',
         borderColor: 'divider',
         display: 'flex',
         justifyContent: 'space-between',

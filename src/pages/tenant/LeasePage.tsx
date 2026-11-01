@@ -106,9 +106,9 @@ export default function LeasePage() {
         }
       />
 
-      <Box sx={{ display: 'flex', gap: 2 }}>
+      <Box sx={{ display: 'flex', gap: 2, flex: 1, minHeight: 0 }}>
         {/* Left column — Document preview */}
-        <Paper variant="outlined" sx={{ borderColor: 'divider', overflow: 'hidden', flex: 1, minWidth: 0 }}>
+        <Paper variant="outlined" sx={{ borderColor: 'divider', overflow: 'hidden', flex: 7, minWidth: 0 }}>
           {lease.document ? (
             <Box sx={{ bgcolor: '#f5f5f5', height: '100%', display: 'flex', flexDirection: 'column' }}>
               {lease.document.fileName && (
@@ -143,7 +143,7 @@ export default function LeasePage() {
         </Paper>
 
         {/* Right column — Contract data cards */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, flex: 1, minWidth: 0 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, flex: 3, minWidth: 0, overflow: 'auto' }}>
           {/* Duration card */}
           <Paper variant="outlined" sx={{ p: 1.5, borderColor: 'divider', flexShrink: 0 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.75 }}>

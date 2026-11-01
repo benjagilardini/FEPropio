@@ -166,8 +166,14 @@ export default function Layout() {
         </Drawer>
       )}
 
-      <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 8, minHeight: 0, height: 'calc(100vh - 64px)', overflow: 'auto' }}>
-        <Outlet />
+      <Box component="main" sx={{ flexGrow: 1, mt: 8, display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)', overflow: 'hidden' }}>
+        <Box sx={{
+          flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'auto', px: 3, pb: 3,
+          '& > *': { flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 },
+          '& > * > *:last-child:not(:first-child)': { flex: 1, minHeight: 0 },
+        }}>
+          <Outlet />
+        </Box>
       </Box>
     </Box>
   );
