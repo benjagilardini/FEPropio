@@ -1,5 +1,5 @@
 import { api } from './axiosInstance';
-import type { RentAdjustment, IndexComparison, PaginatedResponse } from '../types';
+import type { RentAdjustment, AdjustmentSummary, IndexComparison, PaginatedResponse } from '../types';
 
 export const adjustmentApi = {
   list: (leaseId: string, params?: { page?: number; limit?: number }) =>
@@ -7,6 +7,9 @@ export const adjustmentApi = {
 
   getById: (leaseId: string, adjustmentId: string) =>
     api.get<{ data: RentAdjustment }>(`/leases/${leaseId}/adjustments/${adjustmentId}`).then((r) => r.data.data),
+
+  getSummary: (leaseId: string) =>
+    api.get<{ data: AdjustmentSummary }>(`/leases/${leaseId}/adjustment-summary`).then((r) => r.data.data),
 
   notify: (leaseId: string, adjustmentId: string) =>
     api.post(`/leases/${leaseId}/adjustments/${adjustmentId}/notify`),

@@ -166,6 +166,47 @@ export interface RentAdjustment {
   updatedAt?: string;
 }
 
+// ---- Adjustment Summary ----
+export interface IndexStats {
+  lastValue: string;
+  lastDate: string;
+  avgMonthlyVariation: number;
+  last3MonthVariation: number;
+  last6MonthVariation: number;
+  trend: Array<{ period: string; value: number }>;
+}
+
+export interface TimelineEntry {
+  effectiveDate: string;
+  status: string;
+  previousRent: string;
+  minAmount: string;
+  maxAmount: string;
+  minCoefficient: string;
+  maxCoefficient: string;
+  pendingPeriods: string[];
+  startIndexValue: string | null;
+  endIndexValue: string | null;
+  variation: number;
+}
+
+export interface AdjustmentSummary {
+  lease: {
+    startDate: string;
+    endDate: string;
+    initialRent: string;
+    adjustmentIndex: string;
+    adjustmentFrequencyMonths: number;
+  };
+  nextAdjustment: RentAdjustment | null;
+  daysUntilNext: number | null;
+  currentRent: string;
+  totalVariation: number;
+  indexStats: IndexStats;
+  timeline: TimelineEntry[];
+  contractProgress: number;
+}
+
 // ---- Payment ----
 export type PaymentStatus = 'submitted' | 'confirmed' | 'flagged';
 
