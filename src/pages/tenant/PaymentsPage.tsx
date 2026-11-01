@@ -1,200 +1,330 @@
-import { useState } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import {
-  Box, Typography, Paper, Grid, Button, Dialog, DialogTitle,
+  Box, Typography, Paper, Button, Dialog, DialogTitle,
   DialogContent, DialogActions, TextField, Alert, IconButton, Tooltip,
-  Pagination as MuiPagination,
+  Divider, Chip, alpha, useTheme,
 } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
+import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutlineOutlined';
+import AttachFileIcon from '@mui/icons-material/AttachFile';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import DownloadIcon from '@mui/icons-material/Download';
 import { useTenantLeases } from '../../hooks/useLeases';
 import { usePayments, useCreatePayment } from '../../hooks/usePayments';
+import { paymentApi } from '../../api/paymentApi';
 import { useToast } from '../../context/ToastContext';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
-import StatusChip from '../../components/common/StatusChip';
 import PageHeader from '../../components/common/PageHeader';
 import { formatCurrency } from '../../utils/formatCurrency';
-import { formatDate, formatPeriod } from '../../utils/formatDate';
-import { useForm } from 'react-hook-form';
-import type { PaymentInput } from '../../types';
+import type { PaymentReceipt } from '../../types';
 
-function CopyValue({ value }: { value: string }) {
+/* ---- helpers ---- */
+
+function generateMonths(startDate: string, endDate: string): string[] {
+  const months: string[] = [];
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  let cur = new Date(start.getFullYear(), start.getMonth(), 1);
+  const last = new Date(end.getFullYear(), end.getMonth(), 1);
+  while (cur <= last) {
+    months.push(`${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, '0')}`);
+    cur.setMonth(cur.getMonth() + 1);
+  }
+  return months;
+}
+
+function fmtMonth(period: string): string {
+  const [y, m] = period.split('-');
+  const d = new Date(+y, +m - 1, 1);
+  const name = d.toLocaleDateString('es-AR', { month: 'short' });
+  return `${name.charAt(0).toUpperCase() + name.slice(1)} ${y}`;
+}
+
+function fmtMonthLong(period: string): string {
+  const [y, m] = period.split('-');
+  const d = new Date(+y, +m - 1, 1);
+  const name = d.toLocaleDateString('es-AR', { month: 'long' });
+  return `${name.charAt(0).toUpperCase() + name.slice(1)} ${y}`;
+}
+
+/* ---- sub-components ---- */
+
+function CopyField({ label, value }: { label: string; value: string }) {
   const [copied, setCopied] = useState(false);
-  const handleCopy = () => {
-    navigator.clipboard.writeText(value);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  };
+  const copy = () => { navigator.clipboard.writeText(value); setCopied(true); setTimeout(() => setCopied(false), 1500); };
   return (
-    <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
-      <Typography variant="body2" sx={{ fontWeight: 500, fontFamily: 'monospace', letterSpacing: '0.03em' }}>{value}</Typography>
-      <Tooltip title={copied ? 'Copiado' : 'Copiar'}>
-        <IconButton size="small" onClick={handleCopy} sx={{ color: 'text.secondary' }}>
-          <ContentCopyIcon sx={{ fontSize: 14 }} />
-        </IconButton>
-      </Tooltip>
+    <Box sx={{ flex: 1, minWidth: 120 }}>
+      <Typography variant="caption" sx={{ color: 'text.secondary' }}>{label}</Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        <Typography variant="body2" sx={{ fontWeight: 600, fontFamily: 'monospace', letterSpacing: 0.5 }}>{value}</Typography>
+        <Tooltip title={copied ? 'Copiado' : 'Copiar'}><IconButton size="small" onClick={copy} sx={{ p: 0.25 }}><ContentCopyIcon sx={{ fontSize: 13 }} /></IconButton></Tooltip>
+      </Box>
     </Box>
   );
 }
 
+function InfoField({ label, value }: { label: string; value: string }) {
+  return (
+    <Box sx={{ minWidth: 80 }}>
+      <Typography variant="caption" sx={{ color: 'text.secondary' }}>{label}</Typography>
+      <Typography variant="body2" sx={{ fontWeight: 600 }}>{value}</Typography>
+    </Box>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const map: Record<string, { label: string; color: 'success' | 'primary' | 'error'; icon: React.ReactNode }> = {
+    confirmed: { label: 'Aprobado', color: 'success', icon: <CheckCircleOutlinedIcon sx={{ fontSize: 14 }} /> },
+    submitted: { label: 'En revisión', color: 'primary', icon: <HourglassEmptyIcon sx={{ fontSize: 14 }} /> },
+    flagged:   { label: 'Observado', color: 'error', icon: <ErrorOutlineIcon sx={{ fontSize: 14 }} /> },
+  };
+  const cfg = map[status];
+  if (cfg) return <Chip icon={cfg.icon} label={cfg.label} size="small" color={cfg.color} variant="outlined" sx={{ height: 22, fontSize: '0.7rem', '& .MuiChip-icon': { ml: 0.5 } }} />;
+  return <Chip label="Pendiente" size="small" variant="outlined" sx={{ height: 22, fontSize: '0.7rem', color: 'text.disabled', borderColor: 'divider' }} />;
+}
+
+/* ---- page ---- */
+
 export default function TenantPaymentsPage() {
   const { data: leases, isLoading: leasesLoading } = useTenantLeases();
   const activeLease = leases?.find((l) => l.status === 'active') || leases?.[0];
-  const [page, setPage] = useState(1);
-  const { data, isLoading } = usePayments(activeLease?.id || '', page);
+  const { data, isLoading } = usePayments(activeLease?.id || '', 1, 100);
   const createMut = useCreatePayment();
   const toast = useToast();
+  const theme = useTheme();
+
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogPeriod, setDialogPeriod] = useState('');
+  const [message, setMessage] = useState('');
+  const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState('');
-  const { register, handleSubmit, reset } = useForm<PaymentInput>();
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const allMonths = useMemo(() => activeLease ? generateMonths(activeLease.startDate, activeLease.endDate) : [], [activeLease?.startDate, activeLease?.endDate]);
+
+  const byPeriod = useMemo(() => {
+    const m = new Map<string, PaymentReceipt>();
+    data?.data?.forEach((p) => m.set(p.period, p));
+    return m;
+  }, [data]);
 
   if (leasesLoading || isLoading) return <LoadingSpinner />;
   if (!activeLease) return <EmptyState message="No tenés un contrato activo." />;
 
-  const payments = data?.data || [];
-  const totalPages = data?.pagination?.totalPages || 1;
   const pa = activeLease.paymentAccount;
+  const now = new Date();
+  const curPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const past = allMonths.filter((m) => m < curPeriod);
+  const future = allMonths.filter((m) => m >= curPeriod);
+  const ordered = [...future, ...past.reverse()];
 
-  const onSubmit = async (formData: PaymentInput) => {
+  const openDialog = (period: string) => {
+    setDialogPeriod(period);
+    setMessage(''); setFile(null); setError(''); setDialogOpen(true);
+  };
+
+  const onSubmit = async () => {
     try {
       setError('');
-      await createMut.mutateAsync({ leaseId: activeLease.id, data: formData });
+      await createMut.mutateAsync({
+        leaseId: activeLease.id,
+        data: { period: dialogPeriod, paymentDate: new Date().toISOString(), message: message || undefined },
+        file: file || undefined,
+      });
       toast.success('Comprobante cargado correctamente');
       setDialogOpen(false);
-      reset();
     } catch (err: any) {
       const msg = err.response?.data?.message || 'Error al cargar comprobante';
-      setError(msg);
-      toast.error(msg);
+      setError(msg); toast.error(msg);
+    }
+  };
+
+  const downloadReceipt = async (paymentId: string, fileName: string) => {
+    try {
+      const res = await paymentApi.downloadFile(activeLease.id, paymentId);
+      const url = URL.createObjectURL(new Blob([res.data]));
+      const a = document.createElement('a');
+      a.href = url; a.download = fileName; a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error('Error al descargar el archivo');
     }
   };
 
   return (
-    <Box>
-      <PageHeader
-        title="Mis Pagos"
-        actions={
-          activeLease.status === 'active' && (
-            <Button variant="contained" startIcon={<AddIcon />} onClick={() => setDialogOpen(true)}>
-              Cargar comprobante
-            </Button>
-          )
-        }
-      />
+    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+      <PageHeader title="Mis Pagos" />
 
-      {/* Payment account card */}
+      {/* Fixed: payment account card */}
       {pa && (
-        <Paper variant="outlined" sx={{ p: 2.5, mb: 3, borderColor: 'divider' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
-            <AccountBalanceIcon sx={{ fontSize: 20, color: 'primary.main' }} />
-            <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>Datos para transferir</Typography>
+        <Paper variant="outlined" sx={{ px: 2.5, py: 1.5, mb: 1.5, borderColor: 'divider', flexShrink: 0 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1 }}>
+            <AccountBalanceIcon sx={{ fontSize: 18, color: 'primary.main' }} />
+            <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.8rem' }}>Datos para transferir</Typography>
           </Box>
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Typography variant="caption" sx={{ color: 'text.secondary' }}>Titular</Typography>
-              <Typography variant="body2" sx={{ fontWeight: 500 }}>{pa.holderName}</Typography>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Typography variant="caption" sx={{ color: 'text.secondary' }}>Banco</Typography>
-              <Typography variant="body2" sx={{ fontWeight: 500 }}>{pa.bank}</Typography>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Typography variant="caption" sx={{ color: 'text.secondary' }}>CBU/CVU</Typography>
-              <CopyValue value={pa.cbuOrCvu} />
-            </Grid>
-            {pa.alias && (
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <Typography variant="caption" sx={{ color: 'text.secondary' }}>Alias</Typography>
-                <CopyValue value={pa.alias} />
-              </Grid>
-            )}
-          </Grid>
+          <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+            <InfoField label="Titular" value={pa.holderName} />
+            <InfoField label="Banco" value={pa.bank} />
+            <CopyField label="CBU/CVU" value={pa.cbuOrCvu} />
+            {pa.alias && <CopyField label="Alias" value={pa.alias} />}
+          </Box>
         </Paper>
       )}
 
-      {/* Payments list */}
-      {payments.length === 0 ? (
-        <EmptyState
-          message="No hay comprobantes de pago."
-          description="Cuando cargues un comprobante de transferencia, va a aparecer acá."
-          Icon={ReceiptLongIcon}
-          action={
-            activeLease.status === 'active' ? (
-              <Button variant="outlined" startIcon={<AddIcon />} onClick={() => setDialogOpen(true)} sx={{ mt: 1 }}>
-                Cargar primer comprobante
-              </Button>
-            ) : undefined
-          }
-        />
-      ) : (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-          {payments.map((p) => (
-            <Paper key={p.id} variant="outlined" sx={{ px: 2.5, py: 2, borderColor: 'divider' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Box sx={{ width: 44, height: 44, borderRadius: 2, bgcolor: '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <ReceiptLongIcon sx={{ fontSize: 22, color: 'primary.main' }} />
-                </Box>
-                <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.25 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>{formatPeriod(p.period)}</Typography>
-                    <StatusChip status={p.status} />
-                  </Box>
-                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                    Pagado el {formatDate(p.paymentDate)}
-                  </Typography>
-                </Box>
-                <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>{formatCurrency(p.amount)}</Typography>
-                  {p.reviewNote && (
-                    <Typography variant="caption" sx={{ color: p.status === 'flagged' ? 'error.main' : 'text.secondary' }}>
-                      {p.reviewNote}
+      {/* Scrollable table */}
+      <Paper variant="outlined" sx={{ borderColor: 'divider', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        {/* Table header */}
+        <Box sx={{ display: 'flex', alignItems: 'center', px: 2.5, py: 0.75, bgcolor: '#fafafa', borderBottom: '1px solid', borderColor: 'divider', flexShrink: 0 }}>
+          <Typography variant="caption" sx={{ fontWeight: 700, width: 130, flexShrink: 0, textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary', fontSize: '0.65rem' }}>
+            Período
+          </Typography>
+          <Typography variant="caption" sx={{ fontWeight: 700, width: 120, flexShrink: 0, textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary', fontSize: '0.65rem' }}>
+            Monto
+          </Typography>
+          <Typography variant="caption" sx={{ fontWeight: 700, flex: 1, textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary', fontSize: '0.65rem' }}>
+            Detalle
+          </Typography>
+          <Typography variant="caption" sx={{ fontWeight: 700, width: 100, textAlign: 'center', textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary', fontSize: '0.65rem', flexShrink: 0 }}>
+            Estado
+          </Typography>
+          <Box sx={{ width: 120, flexShrink: 0 }} />
+        </Box>
+
+        {/* Scrollable rows */}
+        <Box sx={{ flex: 1, overflow: 'auto' }}>
+          {ordered.map((period, idx) => {
+            const payment = byPeriod.get(period);
+            const status = payment?.status || 'pending';
+            const isCur = period === curPeriod;
+            const isPast = period < curPeriod && !payment;
+            const canUpload = !payment && activeLease.status === 'active';
+            const displayAmount = payment?.expectedAmount || activeLease.currentRent;
+
+            return (
+              <Box key={period}>
+                {idx > 0 && <Divider />}
+                <Box sx={{
+                  display: 'flex', alignItems: 'center', px: 2.5, py: 1,
+                  ...(isCur && { bgcolor: alpha(theme.palette.primary.main, 0.03), borderLeft: `3px solid ${theme.palette.primary.main}`, pl: 2 }),
+                  ...(isPast && { opacity: 0.45 }),
+                  '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.02) },
+                }}>
+                  {/* Period */}
+                  <Box sx={{ width: 130, flexShrink: 0 }}>
+                    <Typography variant="body2" sx={{ fontWeight: isCur ? 700 : 500, fontSize: '0.82rem' }}>
+                      {fmtMonth(period)}
                     </Typography>
-                  )}
+                    {isCur && <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 600, fontSize: '0.65rem', lineHeight: 1 }}>Mes actual</Typography>}
+                  </Box>
+
+                  {/* Amount */}
+                  <Box sx={{ width: 120, flexShrink: 0 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.82rem' }}>
+                      {displayAmount ? formatCurrency(displayAmount) : '—'}
+                    </Typography>
+                  </Box>
+
+                  {/* Detail */}
+                  <Box sx={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                    {payment?.message && (
+                      <Typography variant="caption" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
+                        {payment.message}
+                      </Typography>
+                    )}
+                    {payment?.reviewNote && (
+                      <Typography variant="caption" sx={{ color: 'error.main' }}>
+                        {payment.reviewNote}
+                      </Typography>
+                    )}
+                  </Box>
+
+                  {/* Status */}
+                  <Box sx={{ width: 100, flexShrink: 0, display: 'flex', justifyContent: 'center' }}>
+                    <StatusBadge status={status} />
+                  </Box>
+
+                  {/* Action */}
+                  <Box sx={{ width: 130, flexShrink: 0, textAlign: 'right' }}>
+                    {canUpload && (
+                      <Button size="small" variant={isCur ? 'contained' : 'text'} onClick={() => openDialog(period)} sx={{ fontSize: '0.72rem', py: 0.25, textTransform: 'none' }}>
+                        Cargar pago
+                      </Button>
+                    )}
+                    {payment?.file && (
+                      <Button
+                        size="small"
+                        variant="text"
+                        startIcon={<DownloadIcon sx={{ fontSize: 14 }} />}
+                        onClick={() => downloadReceipt(payment.id, payment.file!.fileName)}
+                        sx={{ fontSize: '0.72rem', py: 0.25, textTransform: 'none' }}
+                      >
+                        Descargar
+                      </Button>
+                    )}
+                    {payment?.status === 'flagged' && activeLease.status === 'active' && (
+                      <Button size="small" variant="text" onClick={() => openDialog(period)} sx={{ fontSize: '0.72rem', py: 0.25, textTransform: 'none' }}>
+                        Reenviar
+                      </Button>
+                    )}
+                  </Box>
                 </Box>
               </Box>
-            </Paper>
-          ))}
+            );
+          })}
         </Box>
-      )}
+      </Paper>
 
-      {totalPages > 1 && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-          <MuiPagination count={totalPages} page={page} onChange={(_, p) => setPage(p)} />
-        </Box>
-      )}
-
-      {/* New payment dialog */}
+      {/* Upload dialog */}
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ fontWeight: 700 }}>Cargar comprobante de pago</DialogTitle>
-        <Box component="form" onSubmit={handleSubmit(onSubmit)}>
-          <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 1 }}>
-            {error && <Alert severity="error">{error}</Alert>}
-            <TextField
-              label="Período (YYYY-MM)" placeholder="2025-01"
-              {...register('period', { required: true })}
-              size="small"
-            />
-            <TextField
-              label="Importe ($)"
-              {...register('amount', { required: true })}
-              size="small"
-            />
-            <TextField
-              label="Fecha de pago" type="datetime-local"
-              slotProps={{ inputLabel: { shrink: true } }}
-              {...register('paymentDate', { required: true })}
-              size="small"
-            />
-          </DialogContent>
-          <DialogActions sx={{ px: 3, pb: 2.5 }}>
-            <Button onClick={() => setDialogOpen(false)}>Cancelar</Button>
-            <Button type="submit" variant="contained" disabled={createMut.isPending}>
-              Enviar
-            </Button>
-          </DialogActions>
-        </Box>
+        <DialogTitle sx={{ fontWeight: 700, pb: 1 }}>
+          Cargar comprobante — {dialogPeriod && fmtMonthLong(dialogPeriod)}
+        </DialogTitle>
+        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+          {error && <Alert severity="error" sx={{ py: 0.5 }}>{error}</Alert>}
+
+          {/* File drop */}
+          <Box
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) setFile(f); }}
+            onClick={() => fileRef.current?.click()}
+            sx={{
+              border: '2px dashed', borderColor: file ? 'primary.main' : 'divider', borderRadius: 2,
+              p: 2, textAlign: 'center', cursor: 'pointer',
+              bgcolor: file ? alpha(theme.palette.primary.main, 0.04) : 'transparent',
+              '&:hover': { borderColor: 'primary.main', bgcolor: alpha(theme.palette.primary.main, 0.03) },
+            }}
+          >
+            <input ref={fileRef} type="file" accept="application/pdf,image/jpeg,image/png,image/webp" hidden onChange={(e) => setFile(e.target.files?.[0] || null)} />
+            {file ? (
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                <AttachFileIcon sx={{ fontSize: 18, color: 'primary.main' }} />
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>{file.name}</Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>({(file.size / 1024).toFixed(0)} KB)</Typography>
+              </Box>
+            ) : (
+              <>
+                <CloudUploadIcon sx={{ fontSize: 28, color: 'text.disabled', mb: 0.25 }} />
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>Arrastrá o hacé clic para adjuntar comprobante</Typography>
+                <Typography variant="caption" sx={{ color: 'text.disabled' }}>PDF, JPG, PNG — máx. 5 MB</Typography>
+              </>
+            )}
+          </Box>
+
+          <TextField
+            label="Mensaje para el propietario (opcional)"
+            value={message} onChange={(e) => setMessage(e.target.value)}
+            size="small" multiline rows={2}
+            placeholder="Ej: Transferencia desde cuenta Santander"
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setDialogOpen(false)}>Cancelar</Button>
+          <Button variant="contained" onClick={onSubmit} disabled={createMut.isPending}>Enviar</Button>
+        </DialogActions>
       </Dialog>
     </Box>
   );

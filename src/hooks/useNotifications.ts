@@ -12,7 +12,6 @@ export function useUnreadCount() {
   return useQuery({
     queryKey: ['notifications', 'unreadCount'],
     queryFn: () => notificationApi.getUnreadCount(),
-    refetchInterval: 30000,
   });
 }
 

@@ -1,11 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { paymentApi } from '../api/paymentApi';
-import type { PaymentInput } from '../types';
 
-export function usePayments(leaseId: string, page = 1) {
+export function usePayments(leaseId: string, page = 1, limit = 20) {
   return useQuery({
-    queryKey: ['payments', leaseId, page],
-    queryFn: () => paymentApi.list(leaseId, { page }),
+    queryKey: ['payments', leaseId, page, limit],
+    queryFn: () => paymentApi.list(leaseId, { page, limit }),
     enabled: !!leaseId,
   });
 }
@@ -13,8 +12,11 @@ export function usePayments(leaseId: string, page = 1) {
 export function useCreatePayment() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ leaseId, data }: { leaseId: string; data: PaymentInput }) =>
-      paymentApi.create(leaseId, data),
+    mutationFn: ({ leaseId, data, file }: {
+      leaseId: string;
+      data: { period: string; amount?: string; paymentDate: string; message?: string };
+      file?: File;
+    }) => paymentApi.create(leaseId, data, file),
     onSuccess: (_, { leaseId }) => qc.invalidateQueries({ queryKey: ['payments', leaseId] }),
   });
 }

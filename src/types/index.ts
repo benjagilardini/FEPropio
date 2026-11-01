@@ -218,6 +218,7 @@ export interface PaymentReceipt {
   expectedAmount?: string;
   paymentDate: string;
   file?: { fileName: string; mimeType: string } | null;
+  message?: string | null;
   status: PaymentStatus;
   reviewNote?: string | null;
   reviewedAt?: string | null;

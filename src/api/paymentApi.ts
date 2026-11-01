@@ -1,9 +1,18 @@
 import { api } from './axiosInstance';
-import type { PaymentReceipt, PaymentInput, PaginatedResponse } from '../types';
+import type { PaymentReceipt, PaginatedResponse } from '../types';
 
 export const paymentApi = {
-  create: (leaseId: string, data: PaymentInput) =>
-    api.post<{ data: PaymentReceipt }>(`/leases/${leaseId}/payments`, data).then((r) => r.data.data),
+  create: (leaseId: string, data: { period: string; amount?: string; paymentDate: string; message?: string }, file?: File) => {
+    const formData = new FormData();
+    formData.append('period', data.period);
+    if (data.amount) formData.append('amount', data.amount);
+    formData.append('paymentDate', data.paymentDate);
+    if (data.message) formData.append('message', data.message);
+    if (file) formData.append('file', file);
+    return api.post<{ data: PaymentReceipt }>(`/leases/${leaseId}/payments`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }).then((r) => r.data.data);
+  },
 
   list: (leaseId: string, params?: { page?: number; limit?: number }) =>
     api.get<PaginatedResponse<PaymentReceipt>>(`/leases/${leaseId}/payments`, { params }).then((r) => r.data),
