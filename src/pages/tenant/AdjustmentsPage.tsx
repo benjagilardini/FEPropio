@@ -1,13 +1,10 @@
-import { useState } from 'react';
 import {
   Box, Typography, Paper, Chip, Divider, LinearProgress, alpha, useTheme,
 } from '@mui/material';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import ShowChartIcon from '@mui/icons-material/ShowChart';
-import TimelineIcon from '@mui/icons-material/Timeline';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
-import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useQuery } from '@tanstack/react-query';
 import { useTenantLeases } from '../../hooks/useLeases';
 import { adjustmentApi } from '../../api/adjustmentApi';
@@ -22,18 +19,6 @@ const FREQUENCY_LABEL: Record<number, string> = {
   1: 'Mensual', 2: 'Bimestral', 3: 'Trimestral',
   4: 'Cuatrimestral', 6: 'Semestral', 12: 'Anual',
 };
-
-const INDEX_DESCRIPTIONS: Record<string, string> = {
-  ICL: 'Índice para Contratos de Locación, publicado por el BCRA. Combina inflación (CER) y salarios (RIPTE).',
-  IPC: 'Índice de Precios al Consumidor, publicado por INDEC. Mide la variación general de precios.',
-  UVA: 'Unidad de Valor Adquisitivo, publicada por el BCRA. Ajusta por inflación diaria según el CER.',
-};
-
-function formatVariation(coef: string | undefined): string {
-  if (!coef) return '-';
-  const pct = (parseFloat(coef) - 1) * 100;
-  return `${pct >= 0 ? '+' : ''}${pct.toFixed(2)}%`;
-}
 
 function formatPct(value: number): string {
   return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
@@ -90,212 +75,187 @@ function StatCard({ label, value, subtitle, color }: {
   );
 }
 
-function MiniChart({ data }: { data: Array<{ period: string; value: number }> }) {
+/* ---- Range Bar Visualization ---- */
+
+function RangeBar({ entry, indexName }: { entry: TimelineEntry; indexName: string }) {
   const theme = useTheme();
-  if (data.length < 2) return null;
+  const hasRange = entry.minAmount !== entry.maxAmount;
+  const isConfirmed = entry.status === 'confirmed';
 
-  const values = data.map((d) => d.value);
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const range = max - min || 1;
-  const height = 48;
-  const width = 200;
-  const step = width / (data.length - 1);
+  // Scale: from previousRent to maxAmount + some padding
+  const scaleMin = entry.previousRent;
+  const scaleMax = entry.maxAmount * 1.02;
+  const range = scaleMax - scaleMin || 1;
 
-  const points = data.map((d, i) => {
-    const x = i * step;
-    const y = height - ((d.value - min) / range) * (height - 4) - 2;
-    return `${x},${y}`;
-  }).join(' ');
+  const minPct = hasRange ? ((entry.minAmount - scaleMin) / range) * 100 : 0;
+  const maxPct = ((entry.maxAmount - scaleMin) / range) * 100;
 
   return (
-    <svg width={width} height={height} style={{ display: 'block' }}>
-      <polyline
-        points={points}
-        fill="none"
-        stroke={theme.palette.primary.main}
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-// --- Timeline (left column) ---
-
-function TimelineDot({ status, isNext }: { status: string; isNext: boolean }) {
-  const theme = useTheme();
-  if (isNext) {
-    return (
-      <Box sx={{
-        width: 12, height: 12, borderRadius: '50%',
-        bgcolor: theme.palette.primary.main, border: `2px solid ${theme.palette.primary.dark}`,
-        flexShrink: 0,
-      }} />
-    );
-  }
-  if (status === 'confirmed') {
-    return <CheckCircleOutlinedIcon sx={{ fontSize: 14, color: 'success.main', flexShrink: 0 }} />;
-  }
-  return (
-    <Box sx={{
-      width: 10, height: 10, borderRadius: '50%',
-      border: `2px solid ${theme.palette.grey[400]}`, flexShrink: 0,
-    }} />
-  );
-}
-
-function AdjustmentTimeline({ entries, nextDate, selectedIdx, onSelect }: {
-  entries: TimelineEntry[]; nextDate: string | null;
-  selectedIdx: number; onSelect: (i: number) => void;
-}) {
-  const theme = useTheme();
-  return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-      {entries.map((entry, i) => {
-        const isNext = nextDate !== null && entry.effectiveDate === nextDate;
-        const isPast = new Date(entry.effectiveDate) <= new Date();
-        const isSelected = i === selectedIdx;
-        return (
-          <Box
-            key={entry.effectiveDate}
-            onClick={() => onSelect(i)}
-            sx={{
-              display: 'flex', gap: 1.5, cursor: 'pointer',
-              '&:hover .timeline-content': {
-                bgcolor: alpha(theme.palette.primary.main, isNext ? 0.08 : 0.04),
-              },
-            }}
-          >
-            {/* Vertical line + dot */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 14 }}>
-              <TimelineDot status={entry.status} isNext={isNext} />
-              {i < entries.length - 1 && (
-                <Box sx={{ width: 2, flex: 1, bgcolor: isPast ? 'success.light' : theme.palette.grey[300], minHeight: 24 }} />
-              )}
-            </Box>
-            {/* Content */}
-            <Box
-              className="timeline-content"
-              sx={{
-                flex: 1, pb: 1.5, minWidth: 0, px: 1, py: 0.5, borderRadius: 1.5,
-                transition: 'background-color 0.15s',
-                ...(isSelected && {
-                  bgcolor: alpha(theme.palette.primary.main, 0.06),
-                  border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-                }),
-                ...(isNext && !isSelected && {
-                  bgcolor: alpha(theme.palette.primary.main, 0.03),
-                }),
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
-                <Typography variant="caption" sx={{ fontWeight: isNext || isSelected ? 700 : 600, color: isNext ? 'primary.main' : 'text.primary' }}>
-                  {formatMonthYear(entry.effectiveDate)}
-                  {isNext && ' — Próximo'}
-                </Typography>
-                <Chip
-                  label={entry.status === 'confirmed' ? 'Confirmado' : 'Estimado'}
-                  size="small"
-                  color={entry.status === 'confirmed' ? 'success' : 'primary'}
-                  variant="outlined"
-                  sx={{ height: 20, fontSize: '0.65rem' }}
-                />
-              </Box>
-              <Box sx={{ display: 'flex', gap: 2, mt: 0.25 }}>
-                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                  {formatCurrency(entry.previousRent)} → {entry.minAmount !== entry.maxAmount
-                    ? `${formatCurrency(entry.minAmount)} – ${formatCurrency(entry.maxAmount)}`
-                    : formatCurrency(entry.maxAmount)}
-                </Typography>
-                <Typography variant="caption" sx={{ fontWeight: 600, color: entry.variation > 0 ? 'error.main' : 'success.main' }}>
-                  {formatPct(entry.variation)}
-                </Typography>
-              </Box>
-            </Box>
-          </Box>
-        );
-      })}
-    </Box>
-  );
-}
-
-// --- Detail Panel (right column) ---
-
-function AdjustmentDetail({ entry, indexName, isNext }: {
-  entry: TimelineEntry; indexName: string; isNext: boolean;
-}) {
-  const theme = useTheme();
-  const isEstimated = entry.status === 'estimated';
-  const hasRange = isEstimated && entry.minAmount !== entry.maxAmount;
-
-  return (
-    <Paper variant="outlined" sx={{ p: 2, borderColor: 'divider' }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+    <Paper variant="outlined" sx={{ p: 2.5, borderColor: 'divider' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
         <TrendingUpIcon sx={{ fontSize: 20, color: 'primary.main' }} />
         <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-          {isNext ? 'Próximo ajuste' : `Ajuste de ${formatMonthYear(entry.effectiveDate)}`}
+          Próximo ajuste
         </Typography>
-        <Box sx={{ ml: 'auto' }}>
-          <Chip
-            label={isEstimated ? 'Estimado' : 'Confirmado'}
-            size="small"
-            color={isEstimated ? 'primary' : 'success'}
-          />
+        <Chip
+          label={isConfirmed ? 'Confirmado' : 'Estimado'}
+          size="small"
+          color={isConfirmed ? 'success' : 'primary'}
+          sx={{ ml: 'auto' }}
+        />
+      </Box>
+
+      {/* Date & current rent */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+        <Box>
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>Fecha efectiva</Typography>
+          <Typography variant="body2" sx={{ fontWeight: 600 }}>{formatDate(entry.effectiveDate)}</Typography>
+        </Box>
+        <Box sx={{ textAlign: 'right' }}>
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>Alquiler actual</Typography>
+          <Typography variant="body2" sx={{ fontWeight: 600 }}>{formatCurrency(entry.previousRent)}</Typography>
         </Box>
       </Box>
 
-      <InfoRow label="Fecha efectiva" value={formatDate(entry.effectiveDate)} bold />
-      <Divider />
-      <InfoRow label="Mes de aplicación" value={formatMonthYear(entry.effectiveDate)} />
-      <Divider />
-      <InfoRow label="Alquiler actual" value={formatCurrency(entry.previousRent)} />
-      <Divider />
-      <InfoRow
-        label={isEstimated ? 'Estimación nuevo alquiler' : 'Nuevo alquiler'}
-        value={
-          hasRange
-            ? `${formatCurrency(entry.minAmount)} – ${formatCurrency(entry.maxAmount)}`
-            : formatCurrency(entry.maxAmount)
-        }
-        bold
-        color={theme.palette.primary.main}
-      />
-      <Divider />
-      <InfoRow
-        label="Variación"
-        value={
-          hasRange
-            ? `${formatVariation(entry.minCoefficient)} a ${formatVariation(entry.maxCoefficient)}`
-            : formatVariation(entry.maxCoefficient)
-        }
-        color={theme.palette.error.main}
-      />
-      {entry.startIndexValue && (
-        <>
-          <Divider />
-          <InfoRow label={`${indexName} inicio de período`} value={parseFloat(entry.startIndexValue).toFixed(2)} />
-        </>
-      )}
-      {entry.endIndexValue && (
-        <>
-          <Divider />
-          <InfoRow label={`${indexName} fin de período`} value={parseFloat(entry.endIndexValue).toFixed(2)} />
-        </>
-      )}
+      {/* Range bar */}
+      <Box sx={{ mb: 1 }}>
+        <Typography variant="caption" sx={{ color: 'text.secondary', mb: 1, display: 'block' }}>
+          {hasRange ? 'Rango estimado del nuevo alquiler' : 'Nuevo alquiler'}
+        </Typography>
 
+        {/* Amount labels */}
+        <Box sx={{ position: 'relative', height: 32, mb: 0.5 }}>
+          {hasRange ? (
+            <>
+              <Chip
+                label={formatCurrency(entry.minAmount)}
+                size="small"
+                sx={{
+                  position: 'absolute',
+                  left: `${minPct}%`,
+                  transform: 'translateX(-50%)',
+                  bgcolor: alpha(theme.palette.primary.main, 0.1),
+                  color: 'primary.main',
+                  fontWeight: 700,
+                  fontSize: '0.8rem',
+                  height: 28,
+                }}
+              />
+              <Chip
+                label={formatCurrency(entry.maxAmount)}
+                size="small"
+                sx={{
+                  position: 'absolute',
+                  left: `${maxPct}%`,
+                  transform: 'translateX(-50%)',
+                  bgcolor: 'primary.main',
+                  color: '#fff',
+                  fontWeight: 700,
+                  fontSize: '0.8rem',
+                  height: 28,
+                }}
+              />
+            </>
+          ) : (
+            <Chip
+              label={formatCurrency(entry.maxAmount)}
+              size="small"
+              sx={{
+                position: 'absolute',
+                left: `${maxPct}%`,
+                transform: 'translateX(-50%)',
+                bgcolor: 'primary.main',
+                color: '#fff',
+                fontWeight: 700,
+                fontSize: '0.8rem',
+                height: 28,
+              }}
+            />
+          )}
+        </Box>
+
+        {/* Track */}
+        <Box sx={{ position: 'relative', height: 8, bgcolor: alpha(theme.palette.grey[300], 0.5), borderRadius: 4 }}>
+          {hasRange ? (
+            <Box sx={{
+              position: 'absolute',
+              left: `${minPct}%`,
+              width: `${maxPct - minPct}%`,
+              height: '100%',
+              bgcolor: alpha(theme.palette.primary.main, 0.35),
+              borderRadius: 4,
+            }}>
+              {/* Min dot */}
+              <Box sx={{
+                position: 'absolute', left: 0, top: '50%', transform: 'translate(-50%, -50%)',
+                width: 14, height: 14, borderRadius: '50%',
+                bgcolor: '#fff', border: `3px solid ${theme.palette.primary.main}`,
+              }} />
+              {/* Max dot */}
+              <Box sx={{
+                position: 'absolute', right: 0, top: '50%', transform: 'translate(50%, -50%)',
+                width: 14, height: 14, borderRadius: '50%',
+                bgcolor: theme.palette.primary.main,
+              }} />
+            </Box>
+          ) : (
+            <Box sx={{
+              position: 'absolute',
+              left: 0,
+              width: `${maxPct}%`,
+              height: '100%',
+              bgcolor: theme.palette.primary.main,
+              borderRadius: 4,
+            }}>
+              <Box sx={{
+                position: 'absolute', right: 0, top: '50%', transform: 'translate(50%, -50%)',
+                width: 14, height: 14, borderRadius: '50%',
+                bgcolor: theme.palette.primary.main,
+                border: '2px solid #fff',
+                boxShadow: 1,
+              }} />
+            </Box>
+          )}
+        </Box>
+
+        {/* Scale labels */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
+          <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: '0.65rem' }}>
+            {formatCurrency(scaleMin)}
+          </Typography>
+          <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: '0.65rem' }}>
+            {formatCurrency(scaleMax)}
+          </Typography>
+        </Box>
+      </Box>
+
+      {/* Variation */}
+      <Box sx={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        mt: 1.5, pt: 1.5, borderTop: '1px solid', borderColor: 'divider',
+      }}>
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>Variación estimada</Typography>
+        <Typography variant="body2" sx={{ fontWeight: 700, color: 'error.main' }}>
+          {hasRange
+            ? `${formatPct(((entry.minAmount / entry.previousRent) - 1) * 100)} a ${formatPct(entry.variation)}`
+            : formatPct(entry.variation)}
+        </Typography>
+      </Box>
+
+      {/* Pending info */}
       {entry.pendingPeriods.length > 0 && (
-        <Box sx={{ mt: 1.5, p: 1.5, bgcolor: alpha(theme.palette.primary.main, 0.06), borderRadius: 1.5, display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+        <Box sx={{
+          mt: 1.5, p: 1.5, bgcolor: alpha(theme.palette.primary.main, 0.06),
+          borderRadius: 1.5, display: 'flex', alignItems: 'flex-start', gap: 1,
+        }}>
           <InfoOutlinedIcon sx={{ fontSize: 18, color: 'primary.main', mt: 0.1 }} />
           <Box>
             <Typography variant="caption" sx={{ fontWeight: 600, color: 'primary.dark' }}>
               Pendiente de publicación
             </Typography>
             <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary', mt: 0.25 }}>
-              El monto se confirmará cuando se publiquen los valores del{' '}
-              {indexName} para los períodos pendientes.
-              La estimación usa la variación reciente del índice para proyectar un rango.
+              El monto se confirmará cuando se publiquen los valores del {indexName} para los
+              períodos pendientes. El rango se reduce a medida que se difunden los datos faltantes.
             </Typography>
           </Box>
         </Box>
@@ -304,7 +264,28 @@ function AdjustmentDetail({ entry, indexName, isNext }: {
   );
 }
 
-// --- Main Page ---
+/* ---- Applied adjustments list ---- */
+
+function AppliedAdjustmentRow({ entry }: { entry: TimelineEntry }) {
+  return (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1 }}>
+      <CheckCircleIcon sx={{ fontSize: 16, color: 'success.main', flexShrink: 0 }} />
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+          {formatMonthYear(entry.effectiveDate)}
+        </Typography>
+      </Box>
+      <Typography variant="body2" sx={{ color: 'text.secondary', flexShrink: 0 }}>
+        {formatCurrency(entry.previousRent)} → {formatCurrency(entry.maxAmount)}
+      </Typography>
+      <Typography variant="caption" sx={{ fontWeight: 600, color: 'error.main', flexShrink: 0, minWidth: 60, textAlign: 'right' }}>
+        {formatPct(entry.variation)}
+      </Typography>
+    </Box>
+  );
+}
+
+/* ---- Main Page ---- */
 
 export default function AdjustmentsPage() {
   const { data: leases, isLoading: leasesLoading } = useTenantLeases();
@@ -316,11 +297,6 @@ export default function AdjustmentsPage() {
     enabled: !!activeLease,
   });
 
-  // Default to the next adjustment (first future one), or the first entry
-  const nextIdx = summary?.timeline.findIndex((t) => new Date(t.effectiveDate) > new Date()) ?? 0;
-  const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
-  const activeIdx = selectedIdx ?? (nextIdx >= 0 ? nextIdx : 0);
-
   if (leasesLoading || isLoading) return <LoadingSpinner />;
   if (!activeLease) return <EmptyState message="No tenés un contrato activo." />;
   if (!summary) return <EmptyState message="No hay datos de ajustes disponibles." />;
@@ -328,8 +304,13 @@ export default function AdjustmentsPage() {
   const { daysUntilNext, indexStats, timeline, contractProgress, lease } = summary;
   const freq = FREQUENCY_LABEL[lease.adjustmentFrequencyMonths] || `Cada ${lease.adjustmentFrequencyMonths} meses`;
   const theme = useTheme();
-  const nextDate = timeline[nextIdx >= 0 ? nextIdx : -1]?.effectiveDate ?? null;
-  const selectedEntry = timeline[activeIdx];
+
+  const nextIdx = timeline.findIndex((t) => new Date(t.effectiveDate) > new Date());
+  const nextEntry = nextIdx >= 0 ? timeline[nextIdx] : null;
+  const nextDate = nextEntry?.effectiveDate ?? null;
+  const appliedEntries = timeline.filter((t) => t.status === 'confirmed').sort(
+    (a, b) => b.effectiveDate.localeCompare(a.effectiveDate),
+  );
 
   return (
     <Box>
@@ -368,23 +349,12 @@ export default function AdjustmentsPage() {
         )}
       </Box>
 
-      {/* Master-detail: Timeline left, Detail right */}
+      {/* Two columns: Range bar + Contract / Applied history */}
       <Box sx={{ display: 'flex', gap: 2 }}>
-        {/* LEFT: Timeline + Contract + Index */}
-        <Box sx={{ width: 380, display: 'flex', flexDirection: 'column', gap: 2, flexShrink: 0 }}>
-          {timeline.length > 0 && (
-            <Paper variant="outlined" sx={{ p: 2, borderColor: 'divider' }}>
-              <SectionTitle
-                icon={<TimelineIcon sx={{ fontSize: 20, color: 'primary.main' }} />}
-                title="Cronograma de ajustes"
-              />
-              <AdjustmentTimeline
-                entries={timeline}
-                nextDate={nextDate}
-                selectedIdx={activeIdx}
-                onSelect={setSelectedIdx}
-              />
-            </Paper>
+        {/* LEFT: Next adjustment range + Contract */}
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+          {nextEntry && (
+            <RangeBar entry={nextEntry} indexName={lease.adjustmentIndex} />
           )}
 
           {/* Contract summary */}
@@ -418,54 +388,23 @@ export default function AdjustmentsPage() {
           </Paper>
         </Box>
 
-        {/* RIGHT: Detail + Index */}
-        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
-          {selectedEntry && (
-            <AdjustmentDetail
-              entry={selectedEntry}
-              indexName={lease.adjustmentIndex}
-              isNext={selectedEntry.effectiveDate === nextDate}
-            />
-          )}
-
-          {/* Index info */}
-          <Paper variant="outlined" sx={{ p: 2, borderColor: 'divider' }}>
-            <SectionTitle
-              icon={<ShowChartIcon sx={{ fontSize: 20, color: 'primary.main' }} />}
-              title={`Índice ${lease.adjustmentIndex}`}
-            />
-            <Box sx={{ display: 'flex', gap: 2, mb: 1.5 }}>
-              <Box sx={{ flex: 1 }}>
-                <InfoRow label="Último valor disponible" value={indexStats.lastValue} bold />
-                <Divider />
-                <InfoRow label="Datos disponibles hasta" value={formatDate(indexStats.lastDate)} />
-                <Divider />
-                <InfoRow
-                  label="Variación últimos 3 meses"
-                  value={formatPct(indexStats.last3MonthVariation)}
-                  color={indexStats.last3MonthVariation > 0 ? theme.palette.error.main : theme.palette.success.main}
-                />
-                <Divider />
-                <InfoRow
-                  label="Variación últimos 6 meses"
-                  value={formatPct(indexStats.last6MonthVariation)}
-                  color={indexStats.last6MonthVariation > 0 ? theme.palette.error.main : theme.palette.success.main}
-                />
-              </Box>
-              {indexStats.trend.length >= 2 && (
-                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                  <Typography variant="caption" sx={{ color: 'text.secondary', mb: 0.5 }}>Tendencia</Typography>
-                  <MiniChart data={indexStats.trend} />
+        {/* RIGHT: Applied adjustments */}
+        {appliedEntries.length > 0 && (
+          <Box sx={{ width: 420, flexShrink: 0 }}>
+            <Paper variant="outlined" sx={{ p: 2, borderColor: 'divider' }}>
+              <SectionTitle
+                icon={<CheckCircleIcon sx={{ fontSize: 20, color: 'success.main' }} />}
+                title="Ajustes aplicados"
+              />
+              {appliedEntries.map((entry, i) => (
+                <Box key={entry.effectiveDate}>
+                  {i > 0 && <Divider />}
+                  <AppliedAdjustmentRow entry={entry} />
                 </Box>
-              )}
-            </Box>
-            <Box sx={{ p: 1.5, bgcolor: alpha(theme.palette.info.main, 0.06), borderRadius: 1.5 }}>
-              <Typography variant="caption" sx={{ color: 'text.secondary', lineHeight: 1.5 }}>
-                <strong>{lease.adjustmentIndex}:</strong> {INDEX_DESCRIPTIONS[lease.adjustmentIndex] || 'Índice de ajuste pactado en el contrato.'}
-              </Typography>
-            </Box>
-          </Paper>
-        </Box>
+              ))}
+            </Paper>
+          </Box>
+        )}
       </Box>
     </Box>
   );

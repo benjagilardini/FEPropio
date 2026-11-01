@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Box, Typography, Paper, Button, Breadcrumbs, Link,
+  Box, Typography, Paper, Button,
   Stepper, Step, StepLabel, TextField, Alert, Grid,
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
@@ -11,6 +11,7 @@ import { useLease, useInviteTenant } from '../../hooks/useLeases';
 import { useUnit } from '../../hooks/useUnits';
 import { useToast } from '../../context/ToastContext';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import PageHeader from '../../components/common/PageHeader';
 
 const steps = ['Cargar documento', 'Confirmar datos', 'Habilitar acceso al locatario'];
 
@@ -70,26 +71,15 @@ export default function LeaseInvitePage() {
 
   return (
     <Box>
-      {/* Breadcrumb */}
-      <Breadcrumbs sx={{ mb: 1 }}>
-        <Link underline="hover" color="inherit" sx={{ cursor: 'pointer', fontSize: '0.875rem' }} onClick={() => navigate('/units')}>
-          Mis unidades
-        </Link>
-        {unit && (
-          <Link underline="hover" color="inherit" sx={{ cursor: 'pointer', fontSize: '0.875rem' }} onClick={() => navigate(`/units/${lease.unitId}`)}>
-            {unitAddress}
-          </Link>
-        )}
-        <Typography sx={{ fontSize: '0.875rem', color: 'text.primary' }}>Nuevo contrato</Typography>
-      </Breadcrumbs>
-
-      {/* Title */}
-      <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
-        Habilitar acceso al locatario
-      </Typography>
-      <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-        Contrato registrado. Invitá al locatario para que acceda a la información de la unidad.
-      </Typography>
+      <PageHeader
+        breadcrumbs={[
+          { label: 'Mis unidades', onClick: () => navigate('/units') },
+          ...(unit ? [{ label: unitAddress, onClick: () => navigate(`/units/${lease.unitId}`) }] : []),
+          { label: 'Nuevo contrato' },
+        ]}
+        title="Habilitar acceso al locatario"
+        subtitle="Contrato registrado. Invitá al locatario para que acceda a la información de la unidad."
+      />
 
       {/* Stepper */}
       <Stepper activeStep={2} sx={{ mb: 4 }}>

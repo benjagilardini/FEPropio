@@ -5,6 +5,7 @@ import {
 } from '@mui/material';
 import { useYield } from '../../hooks/useYield';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import PageHeader from '../../components/common/PageHeader';
 import { formatCurrency } from '../../utils/formatCurrency';
 import { formatPercentage } from '../../utils/formatPercentage';
 import { formatPeriod } from '../../utils/formatDate';
@@ -25,7 +26,7 @@ export default function YieldPage() {
 
   return (
     <Box>
-      <Typography variant="h5" sx={{ mb: 3 }}>Rendimiento</Typography>
+      <PageHeader title="Rendimiento" />
 
       <Grid container spacing={3} sx={{ mb: 3 }}>
         {[

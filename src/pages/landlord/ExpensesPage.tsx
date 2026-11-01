@@ -11,6 +11,7 @@ import { useExpenses, useCreateExpense, useDeleteExpense } from '../../hooks/use
 import { useToast } from '../../context/ToastContext';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
+import PageHeader from '../../components/common/PageHeader';
 import { formatCurrency } from '../../utils/formatCurrency';
 import { formatDate } from '../../utils/formatDate';
 import { useForm, Controller } from 'react-hook-form';
@@ -65,12 +66,14 @@ export default function ExpensesPage() {
 
   return (
     <Box>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h5">Gastos</Typography>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={() => setDialogOpen(true)}>
-          Nuevo Gasto
-        </Button>
-      </Box>
+      <PageHeader
+        title="Gastos"
+        actions={
+          <Button variant="contained" startIcon={<AddIcon />} onClick={() => setDialogOpen(true)}>
+            Nuevo Gasto
+          </Button>
+        }
+      />
 
       {expenses.length === 0 ? (
         <EmptyState message="No hay gastos registrados." />

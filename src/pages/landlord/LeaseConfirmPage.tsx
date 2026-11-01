@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Box, Typography, Paper, Button, Breadcrumbs, Link,
+  Box, Typography, Paper, Button,
   Stepper, Step, StepLabel, Alert, Divider,
   TextField, MenuItem, Grid,
 } from '@mui/material';
@@ -15,6 +15,7 @@ import { useUnit } from '../../hooks/useUnits';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import PageHeader from '../../components/common/PageHeader';
 import StatusChip from '../../components/common/StatusChip';
 import type { PaymentAccount } from '../../types';
 import { leaseApi } from '../../api/leaseApi';
@@ -196,42 +197,35 @@ export default function LeaseConfirmPage() {
 
   return (
     <Box>
-      {/* Breadcrumb */}
-      <Breadcrumbs sx={{ mb: 1 }}>
-        <Link underline="hover" color="inherit" sx={{ cursor: 'pointer', fontSize: '0.875rem' }} onClick={() => navigate('/units')}>
-          Mis unidades
-        </Link>
-        {unit && (
-          <Link underline="hover" color="inherit" sx={{ cursor: 'pointer', fontSize: '0.875rem' }} onClick={() => navigate(`/units/${lease.unitId}`)}>
-            {unitAddress}
-          </Link>
-        )}
-        <Typography sx={{ fontSize: '0.875rem', color: 'text.primary' }}>Nuevo contrato</Typography>
-      </Breadcrumbs>
-
-      {/* Title + actions */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 0.5 }}>
-        <Box sx={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Typography variant="h5" sx={{ fontWeight: 700 }}>Confirmar datos extraídos</Typography>
-          {hasExtracted && (
+      <PageHeader
+        breadcrumbs={[
+          { label: 'Mis unidades', onClick: () => navigate('/units') },
+          ...(unit ? [{ label: unitAddress, onClick: () => navigate(`/units/${lease.unitId}`) }] : []),
+          { label: 'Nuevo contrato' },
+        ]}
+        title="Confirmar datos extraídos"
+        chips={
+          hasExtracted ? (
             <Box sx={{ px: 1.5, py: 0.25, border: '1px solid', borderColor: 'divider', borderRadius: 1, fontSize: '0.8rem', fontWeight: 500, whiteSpace: 'nowrap' }}>
               {confirmedCount} de {fields.length} confirmados
             </Box>
-          )}
-        </Box>
-        <Box sx={{ display: 'flex', gap: 1, flexShrink: 0, ml: 2 }}>
-          <Button onClick={() => navigate(-1)} sx={{ textTransform: 'uppercase', fontWeight: 600 }}>
-            Volver
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleSubmit(handleRegister)}
-            disabled={activateMut.isPending || updateMut.isPending}
-          >
-            {activateMut.isPending || updateMut.isPending ? 'Registrando...' : 'Registrar contrato'}
-          </Button>
-        </Box>
-      </Box>
+          ) : undefined
+        }
+        actions={
+          <>
+            <Button onClick={() => navigate(-1)} sx={{ textTransform: 'uppercase', fontWeight: 600 }}>
+              Volver
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleSubmit(handleRegister)}
+              disabled={activateMut.isPending || updateMut.isPending}
+            >
+              {activateMut.isPending || updateMut.isPending ? 'Registrando...' : 'Registrar contrato'}
+            </Button>
+          </>
+        }
+      />
 
       {/* Stepper */}
       <Stepper activeStep={1} sx={{ mb: 4, mt: 2 }}>

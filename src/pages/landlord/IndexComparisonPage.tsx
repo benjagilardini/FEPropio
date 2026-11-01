@@ -2,6 +2,7 @@ import { useParams } from 'react-router-dom';
 import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import { useIndexComparison } from '../../hooks/useAdjustments';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import PageHeader from '../../components/common/PageHeader';
 import { formatCurrency } from '../../utils/formatCurrency';
 import { formatPercentage } from '../../utils/formatPercentage';
 import { formatDate } from '../../utils/formatDate';
@@ -16,7 +17,7 @@ export default function IndexComparisonPage() {
 
   return (
     <Box>
-      <Typography variant="h5" sx={{ mb: 3 }}>Comparacion de Indices</Typography>
+      <PageHeader title="Comparación de Índices" />
 
       <TableContainer component={Paper} sx={{ mb: 3 }}>
         <Table>

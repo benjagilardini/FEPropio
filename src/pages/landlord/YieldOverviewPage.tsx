@@ -9,6 +9,7 @@ import { useUnits } from '../../hooks/useUnits';
 import { useYield } from '../../hooks/useYield';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
+import PageHeader from '../../components/common/PageHeader';
 import { formatCurrency } from '../../utils/formatCurrency';
 import { formatPercentage } from '../../utils/formatPercentage';
 import { formatPeriod } from '../../utils/formatDate';
@@ -42,32 +43,24 @@ export default function YieldOverviewPage() {
 
   return (
     <Box>
-      {/* Header */}
-      <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
-        <Box>
-          <Typography variant="h5" fontWeight="bold">Rendimiento</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, maxWidth: 600 }}>
-            Calculado con los ingresos percibidos y los gastos registrados en el sistema, sobre el valor que definiste para la propiedad.
-          </Typography>
-        </Box>
-        {selectedUnitId && (
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => navigate(`/units/${selectedUnitId}/expenses`)}
-          >
-            Registrar gasto
-          </Button>
-        )}
-      </Box>
+      <PageHeader
+        title="Rendimiento"
+        subtitle="Calculado con los ingresos percibidos y los gastos registrados, sobre el valor que definiste para la propiedad."
+        actions={
+          selectedUnitId ? (
+            <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate(`/units/${selectedUnitId}/expenses`)}>
+              Registrar gasto
+            </Button>
+          ) : undefined
+        }
+      />
 
-      {/* Unit selector */}
       <TextField
         select
         label="Unidad"
         value={selectedUnitId}
         onChange={(e) => setSelectedUnitId(e.target.value)}
-        sx={{ mt: 2, mb: 3, minWidth: 320 }}
+        sx={{ mb: 3, minWidth: 320 }}
         size="small"
       >
         {units.map((unit) => (

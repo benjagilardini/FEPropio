@@ -11,6 +11,7 @@ import { leaseApi } from '../../api/leaseApi';
 import { adjustmentApi } from '../../api/adjustmentApi';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
+import PageHeader from '../../components/common/PageHeader';
 import StatusChip from '../../components/common/StatusChip';
 import { formatCurrency } from '../../utils/formatCurrency';
 import { formatDate } from '../../utils/formatDate';
@@ -76,7 +77,7 @@ export default function AdjustmentsOverviewPage() {
     })),
   });
 
-  // Build rows
+  // Build rows: only the next upcoming adjustment per unit + confirmed history
   const upcomingRows: AdjustmentRow[] = [];
   const appliedRows: AdjustmentRow[] = [];
 
@@ -84,17 +85,22 @@ export default function AdjustmentsOverviewPage() {
     const adjData = adjustmentQueries[i]?.data?.data;
     const unit = occupiedUnits.find((u) => unitLeaseMap.get(u.id)?.id === lease.id);
     if (!unit || !adjData) return;
-    adjData.forEach((adj) => {
-      const row = { unit, lease, adjustment: adj };
+
+    // Sort by date ascending to find the first non-confirmed
+    const sorted = [...adjData].sort((a, b) => a.effectiveDate.localeCompare(b.effectiveDate));
+
+    let nextFound = false;
+    for (const adj of sorted) {
       if (adj.status === 'confirmed') {
-        appliedRows.push(row);
-      } else {
-        upcomingRows.push(row);
+        appliedRows.push({ unit, lease, adjustment: adj });
+      } else if (!nextFound) {
+        // Only take the first (nearest) upcoming adjustment per lease
+        upcomingRows.push({ unit, lease, adjustment: adj });
+        nextFound = true;
       }
-    });
+    }
   });
 
-  // Sort upcoming by effectiveDate ascending, applied by effectiveDate descending
   upcomingRows.sort((a, b) => a.adjustment.effectiveDate.localeCompare(b.adjustment.effectiveDate));
   appliedRows.sort((a, b) => b.adjustment.effectiveDate.localeCompare(a.adjustment.effectiveDate));
 
@@ -106,11 +112,10 @@ export default function AdjustmentsOverviewPage() {
 
   return (
     <Box>
-      {/* Header */}
-      <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>Actualizaciones</Typography>
-      <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3 }}>
-        Próximos ajustes de todas tus unidades, según el índice y la periodicidad de cada contrato.
-      </Typography>
+      <PageHeader
+        title="Actualizaciones"
+        subtitle="Próximos ajustes de todas tus unidades, según el índice y la periodicidad de cada contrato."
+      />
 
       {occupiedUnits.length === 0 ? (
         <EmptyState
@@ -125,7 +130,7 @@ export default function AdjustmentsOverviewPage() {
           {upcomingRows.length > 0 && (
             <>
               <Typography sx={{ fontWeight: 700, fontSize: '1.05rem', mb: 2 }}>
-                Próximos ajustes
+                Próximo ajuste
               </Typography>
               <TableContainer component={Paper} variant="outlined" sx={{ borderColor: 'divider', mb: 4 }}>
                 <Table>

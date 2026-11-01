@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box, Typography, Paper, TextField, Button, MenuItem, Grid,
-  IconButton, Divider, Breadcrumbs, Link,
+  IconButton, Divider,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlined';
@@ -11,6 +11,7 @@ import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { useUnit, useCreateUnit, useUpdateUnit } from '../../hooks/useUnits';
 import { useToast } from '../../context/ToastContext';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import PageHeader from '../../components/common/PageHeader';
 import type { UnitInput } from '../../types';
 
 const unitTypes = [
@@ -54,6 +55,7 @@ export default function UnitFormPage() {
       address: { street: '', number: '', floor: '', apartment: '', neighborhood: '', city: '', province: '' },
       unitType: 'apartment',
       utilityAccounts: [],
+      paymentAccount: { holderName: '', bank: '', cbuOrCvu: '', alias: '' },
     },
   });
 
@@ -70,6 +72,7 @@ export default function UnitFormPage() {
         referenceValue: unit.referenceValue,
         facilities: unit.facilities,
         utilityAccounts: unit.utilityAccounts,
+        paymentAccount: unit.paymentAccount || { holderName: '', bank: '', cbuOrCvu: '', alias: '' },
       });
     }
   }, [isEdit, unit, reset]);
@@ -77,6 +80,11 @@ export default function UnitFormPage() {
   if (isEdit && isLoading) return <LoadingSpinner />;
 
   const onSubmit = async (data: UnitInput) => {
+    // Send null if all billing fields are empty
+    const pa = data.paymentAccount;
+    if (pa && !pa.holderName && !pa.bank && !pa.cbuOrCvu) {
+      data.paymentAccount = null;
+    }
     try {
       if (isEdit) {
         await updateMutation.mutateAsync({ unitId: unitId!, data });
@@ -103,28 +111,14 @@ export default function UnitFormPage() {
 
   return (
     <Box>
-      {/* Breadcrumb */}
-      <Breadcrumbs sx={{ mb: 1 }}>
-        <Link
-          underline="hover"
-          color="inherit"
-          sx={{ cursor: 'pointer', fontSize: '0.875rem' }}
-          onClick={() => navigate('/units')}
-        >
-          Mis unidades
-        </Link>
-        <Typography sx={{ fontSize: '0.875rem', color: 'text.primary' }}>
-          {isEdit ? 'Editar unidad' : 'Nueva unidad'}
-        </Typography>
-      </Breadcrumbs>
-
-      {/* Title */}
-      <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
-        {isEdit ? 'Editar unidad' : 'Nueva unidad'}
-      </Typography>
-      <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3 }}>
-        Los datos técnicos y administrativos quedan asociados a la unidad, esté ocupada o vacante.
-      </Typography>
+      <PageHeader
+        breadcrumbs={[
+          { label: 'Mis unidades', onClick: () => navigate('/units') },
+          { label: isEdit ? 'Editar unidad' : 'Nueva unidad' },
+        ]}
+        title={isEdit ? 'Editar unidad' : 'Nueva unidad'}
+        subtitle="Los datos técnicos y administrativos quedan asociados a la unidad, esté ocupada o vacante."
+      />
 
       <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3, alignItems: 'start' }}>
@@ -289,6 +283,24 @@ export default function UnitFormPage() {
               >
                 Agregar suministro
               </Button>
+            </Paper>
+
+            {/* Billing */}
+            <Paper variant="outlined" sx={{ p: 3, borderColor: 'divider' }}>
+              <Typography sx={sectionSx}>Datos de facturación</Typography>
+              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+                Datos de la cuenta donde el inquilino debe realizar las transferencias.
+              </Typography>
+              <TextField fullWidth label="Titular" sx={{ mb: 2 }} {...register('paymentAccount.holderName')} />
+              <TextField fullWidth label="Banco" sx={{ mb: 2 }} {...register('paymentAccount.bank')} />
+              <Grid container spacing={2}>
+                <Grid size={{ xs: 7 }}>
+                  <TextField fullWidth label="CBU / CVU" {...register('paymentAccount.cbuOrCvu')} />
+                </Grid>
+                <Grid size={{ xs: 5 }}>
+                  <TextField fullWidth label="Alias" {...register('paymentAccount.alias')} />
+                </Grid>
+              </Grid>
             </Paper>
 
             {/* Property value */}

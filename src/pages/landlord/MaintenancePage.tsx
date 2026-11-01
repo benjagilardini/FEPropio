@@ -12,6 +12,7 @@ import { useMaintenanceRequests, useUpdateMaintenanceStatus } from '../../hooks/
 import { useToast } from '../../context/ToastContext';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
+import PageHeader from '../../components/common/PageHeader';
 import StatusChip from '../../components/common/StatusChip';
 import { formatDateTime } from '../../utils/formatDate';
 import { useForm, Controller } from 'react-hook-form';
@@ -65,7 +66,7 @@ export default function MaintenancePage() {
 
   return (
     <Box>
-      <Typography variant="h5" sx={{ mb: 3 }}>Reclamos de Mantenimiento</Typography>
+      <PageHeader title="Reclamos de Mantenimiento" />
 
       {requests.length === 0 ? (
         <EmptyState message="No hay reclamos de mantenimiento." />

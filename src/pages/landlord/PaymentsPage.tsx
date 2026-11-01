@@ -11,6 +11,7 @@ import { usePayments, useConfirmPayment, useFlagPayment } from '../../hooks/useP
 import { useToast } from '../../context/ToastContext';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
+import PageHeader from '../../components/common/PageHeader';
 import StatusChip from '../../components/common/StatusChip';
 import { formatCurrency } from '../../utils/formatCurrency';
 import { formatDate, formatPeriod } from '../../utils/formatDate';
@@ -54,7 +55,7 @@ export default function PaymentsPage() {
 
   return (
     <Box>
-      <Typography variant="h5" sx={{ mb: 3 }}>Comprobantes de Pago</Typography>
+      <PageHeader title="Comprobantes de Pago" />
 
       {payments.length === 0 ? (
         <EmptyState message="No hay comprobantes de pago." />

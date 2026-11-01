@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Box, Typography, Paper, Button, Breadcrumbs, Link,
+  Box, Typography, Paper, Button,
   Stepper, Step, StepLabel, Alert, LinearProgress,
 } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
@@ -14,6 +14,7 @@ import IconButton from '@mui/material/IconButton';
 import { useUnit } from '../../hooks/useUnits';
 import { useCreateLease, useExtractLease, useLeasesByUnit } from '../../hooks/useLeases';
 import { useToast } from '../../context/ToastContext';
+import PageHeader from '../../components/common/PageHeader';
 import type { Unit } from '../../types';
 
 const steps = ['Cargar documento', 'Confirmar datos', 'Habilitar acceso al locatario'];
@@ -170,22 +171,15 @@ export default function LeaseUploadPage() {
 
   return (
     <Box>
-      {/* Breadcrumb */}
-      <Breadcrumbs sx={{ mb: 1 }}>
-        <Link underline="hover" color="inherit" sx={{ cursor: 'pointer', fontSize: '0.875rem' }} onClick={() => navigate('/units')}>
-          Mis unidades
-        </Link>
-        {unit && (
-          <Link underline="hover" color="inherit" sx={{ cursor: 'pointer', fontSize: '0.875rem' }} onClick={() => navigate(`/units/${unitId}`)}>
-            {unitAddress}
-          </Link>
-        )}
-        <Typography sx={{ fontSize: '0.875rem', color: 'text.primary' }}>Nuevo contrato</Typography>
-      </Breadcrumbs>
-
-      {/* Title */}
-      <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>Nuevo contrato</Typography>
-      <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>{unitSubtitle}</Typography>
+      <PageHeader
+        breadcrumbs={[
+          { label: 'Mis unidades', onClick: () => navigate('/units') },
+          ...(unit ? [{ label: unitAddress, onClick: () => navigate(`/units/${unitId}`) }] : []),
+          { label: 'Nuevo contrato' },
+        ]}
+        title="Nuevo contrato"
+        subtitle={unitSubtitle}
+      />
 
       {/* Stepper */}
       <Stepper activeStep={0} sx={{ mb: 4 }}>

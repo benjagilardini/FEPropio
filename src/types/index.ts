@@ -73,6 +73,7 @@ export interface Unit {
   referenceValue?: string | null;
   facilities?: Facilities;
   utilityAccounts?: UtilityAccount[];
+  paymentAccount?: PaymentAccount | null;
   createdAt?: string;
   updatedAt?: string;
   // List fields (from UnitListDTO)
@@ -90,6 +91,7 @@ export interface UnitInput {
   referenceValue?: string | null;
   facilities?: Facilities;
   utilityAccounts?: UtilityAccount[];
+  paymentAccount?: PaymentAccount | null;
 }
 
 // ---- Lease ----
@@ -328,6 +330,9 @@ export interface YieldResult {
 
 // ---- Index Comparison ----
 export interface IndexComparison {
+  contractedIndex: AdjustmentIndex;
+  frequencyMonths: number;
+  startDate: string;
   IPC: IndexEvolution;
   ICL: IndexEvolution;
   UVA: IndexEvolution;
@@ -336,6 +341,7 @@ export interface IndexComparison {
 export interface IndexEvolution {
   currentRent: string;
   totalVariation: string;
+  totalCollected: string;
   history: {
     date: string;
     rent: string;

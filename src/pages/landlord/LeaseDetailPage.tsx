@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Box, Typography, Paper, Button, Breadcrumbs, Link,
+  Box, Typography, Paper, Button,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField,
 } from '@mui/material';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
@@ -14,6 +14,7 @@ import { useAdjustments } from '../../hooks/useAdjustments';
 import { useToast } from '../../context/ToastContext';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
+import PageHeader from '../../components/common/PageHeader';
 import StatusChip from '../../components/common/StatusChip';
 import { formatCurrency } from '../../utils/formatCurrency';
 import { formatDate } from '../../utils/formatDate';
@@ -91,51 +92,30 @@ export default function LeaseDetailPage() {
 
   return (
     <Box>
-      {/* Breadcrumb */}
-      <Breadcrumbs sx={{ mb: 1 }}>
-        <Link underline="hover" color="inherit" sx={{ cursor: 'pointer', fontSize: '0.875rem' }} onClick={() => navigate('/units')}>
-          Mis unidades
-        </Link>
-        {unit && (
-          <Link underline="hover" color="inherit" sx={{ cursor: 'pointer', fontSize: '0.875rem' }} onClick={() => navigate(`/units/${lease.unitId}`)}>
-            {unitAddress}
-          </Link>
-        )}
-        <Typography sx={{ fontSize: '0.875rem', color: 'text.primary' }}>Contrato</Typography>
-      </Breadcrumbs>
-
-      {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.5 }}>
-            <Typography variant="h5" sx={{ fontWeight: 700 }}>Contrato</Typography>
-            <StatusChip status={lease.status} />
-          </Box>
-          {unit && (
-            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              {unitAddress}
-              {lease.tenantName ? ` · ${lease.tenantName}` : ''}
-            </Typography>
-          )}
-        </Box>
-        <Box sx={{ display: 'flex', gap: 1, flexShrink: 0, ml: 2 }}>
-          {lease.status === 'draft' && (
-            <Button variant="contained" onClick={() => navigate(`/leases/${leaseId}/confirm`)} sx={{ textTransform: 'uppercase' }}>
-              Confirmar campos
-            </Button>
-          )}
-          {lease.status === 'active' && (
-            <Button
-              variant="outlined"
-              color="error"
-              onClick={() => setConfirmEnd(true)}
-              sx={{ textTransform: 'uppercase' }}
-            >
-              Finalizar contrato
-            </Button>
-          )}
-        </Box>
-      </Box>
+      <PageHeader
+        breadcrumbs={[
+          { label: 'Mis unidades', onClick: () => navigate('/units') },
+          ...(unit ? [{ label: unitAddress, onClick: () => navigate(`/units/${lease.unitId}`) }] : []),
+          { label: 'Contrato' },
+        ]}
+        title="Contrato"
+        subtitle={unit ? `${unitAddress}${lease.tenantName ? ` · ${lease.tenantName}` : ''}` : undefined}
+        chips={<StatusChip status={lease.status} />}
+        actions={
+          <>
+            {lease.status === 'draft' && (
+              <Button variant="contained" onClick={() => navigate(`/leases/${leaseId}/confirm`)}>
+                Confirmar campos
+              </Button>
+            )}
+            {lease.status === 'active' && (
+              <Button variant="outlined" color="error" onClick={() => setConfirmEnd(true)}>
+                Finalizar contrato
+              </Button>
+            )}
+          </>
+        }
+      />
 
       {/* Two independent columns */}
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '7fr 5fr' }, gap: 3, alignItems: 'start' }}>

@@ -13,6 +13,7 @@ import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
 import { useUnits } from '../../hooks/useUnits';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
+import PageHeader from '../../components/common/PageHeader';
 import StatusChip from '../../components/common/StatusChip';
 import { formatCurrency } from '../../utils/formatCurrency';
 import type { Unit } from '../../types';
@@ -55,25 +56,15 @@ export default function UnitsPage() {
 
   return (
     <Box>
-      {/* Page header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
-            Mis unidades
-          </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            Gestiona tus propiedades y contratos de alquiler
-          </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => navigate('/units/new')}
-          sx={{ flexShrink: 0, ml: 2, mt: 0.5 }}
-        >
-          Nueva unidad
-        </Button>
-      </Box>
+      <PageHeader
+        title="Mis unidades"
+        subtitle="Gestioná tus propiedades y contratos de alquiler."
+        actions={
+          <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate('/units/new')}>
+            Nueva unidad
+          </Button>
+        }
+      />
 
       {units.length === 0 ? (
         <EmptyState

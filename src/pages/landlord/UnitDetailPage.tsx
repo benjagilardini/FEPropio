@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Box, Typography, Button, Paper, Breadcrumbs, Link,
+  Box, Typography, Button, Paper,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -13,6 +13,7 @@ import { leaseApi } from '../../api/leaseApi';
 import { useToast } from '../../context/ToastContext';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
+import PageHeader from '../../components/common/PageHeader';
 import StatusChip from '../../components/common/StatusChip';
 import { formatCurrency } from '../../utils/formatCurrency';
 import { formatDate } from '../../utils/formatDate';
@@ -119,34 +120,20 @@ export default function UnitDetailPage() {
 
   return (
     <Box>
-      {/* Breadcrumb */}
-      <Breadcrumbs sx={{ mb: 1 }}>
-        <Link underline="hover" color="inherit" sx={{ cursor: 'pointer', fontSize: '0.875rem' }} onClick={() => navigate('/units')}>
-          Mis unidades
-        </Link>
-        <Typography sx={{ fontSize: '0.875rem', color: 'text.primary' }}>{address}</Typography>
-      </Breadcrumbs>
-
-      {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.5 }}>
-            <Typography variant="h5" sx={{ fontWeight: 700 }}>{address}</Typography>
-            <StatusChip status={isOccupied ? 'occupied' : 'vacant'} />
-          </Box>
-          {subtitle && (
-            <Typography variant="body2" sx={{ color: 'text.secondary' }}>{subtitle}</Typography>
-          )}
-        </Box>
-        <Button
-          variant="outlined"
-          startIcon={<EditIcon />}
-          onClick={() => navigate(`/units/${unitId}/edit`)}
-          sx={{ flexShrink: 0, ml: 2, textTransform: 'uppercase' }}
-        >
-          Editar unidad
-        </Button>
-      </Box>
+      <PageHeader
+        breadcrumbs={[
+          { label: 'Mis unidades', onClick: () => navigate('/units') },
+          { label: address },
+        ]}
+        title={address}
+        subtitle={subtitle || undefined}
+        chips={<StatusChip status={isOccupied ? 'occupied' : 'vacant'} />}
+        actions={
+          <Button variant="outlined" startIcon={<EditIcon />} onClick={() => navigate(`/units/${unitId}/edit`)}>
+            Editar unidad
+          </Button>
+        }
+      />
 
       {/* Two independent columns */}
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '7fr 5fr' }, gap: 3, alignItems: 'start' }}>
