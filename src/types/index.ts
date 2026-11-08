@@ -113,6 +113,11 @@ export interface PaymentAccount {
   alias?: string | null;
 }
 
+export interface ExpenseResponsibility {
+  category: ExpenseCategory;
+  paidBy: 'landlord' | 'tenant';
+}
+
 export interface Lease {
   id: string;
   unitId: string;
@@ -128,6 +133,7 @@ export interface Lease {
   document?: { fileId: string; fileName: string; mimeType: string; pageCount?: number | null } | null;
   extractedFields: ExtractedField[];
   paymentAccount?: PaymentAccount | null;
+  expenseResponsibility?: ExpenseResponsibility[];
   endedAt?: string | null;
   tenantName?: string | null;
   tenantDni?: string | null;
@@ -243,6 +249,7 @@ export interface Expense {
   category: ExpenseCategory;
   concept: string;
   amount: string;
+  paidBy: 'landlord' | 'tenant';
   maintenanceRequestId?: string;
   createdAt: string;
 }
@@ -252,6 +259,7 @@ export interface ExpenseInput {
   category: ExpenseCategory;
   concept: string;
   amount: string;
+  paidBy?: 'landlord' | 'tenant';
   maintenanceRequestId?: string;
 }
 
@@ -311,13 +319,19 @@ export interface Notification {
 
 // ---- Yield ----
 export interface YieldResult {
+  unitId: string;
+  period: { from: string; to: string };
+  referenceValue: string;
+  grossIncome: string;
+  totalExpenses: string;
+  netIncome: string;
   grossYield: string;
   netYield: string;
   realYield: string;
   inflationRate: string;
   vacancyMonths: number;
   monthlyBreakdown: {
-    period: string;
+    month: string;
     income: string;
     expenses: string;
     net: string;
@@ -326,6 +340,57 @@ export interface YieldResult {
     category: ExpenseCategory;
     total: string;
   }[];
+}
+
+export interface MonthlyRentEntry {
+  month: string;
+  rentArs: number;
+  expensesArs: number;
+  netArs: number;
+  avgDolarOficialVenta: number | null;
+  avgDolarBlueVenta: number | null;
+  netUsdOficial: number | null;
+  netUsdBlue: number | null;
+  daysOccupied: number;
+  totalDays: number;
+  leaseIds: string[];
+}
+
+export interface DollarComparison {
+  rentIncreasePercent: number;
+  devaluationOficialPercent: number;
+  devaluationBluePercent: number;
+  netVsOficialPercent: number;
+  netVsBluePercent: number;
+  beatsDollarOficial: boolean;
+  beatsDollarBlue: boolean;
+}
+
+export interface AnnualYieldWarning {
+  code: string;
+  message: string;
+}
+
+export interface AnnualYieldResponse {
+  unitId: string;
+  year: number;
+  address: string;
+  referenceValueUsd: number | null;
+  calculatedUpToMonth: string;
+  isIncompleteYear: boolean;
+  occupiedMonths: number;
+  vacantMonths: number;
+  totalRentArs: number;
+  monthlyRent: MonthlyRentEntry[];
+  totalExpensesArs: number;
+  hasExpenses: boolean;
+  expensesByCategory: { category: string; total: number }[];
+  netIncomeArs: number;
+  netIncomeUsdOficial: number;
+  netIncomeUsdBlue: number;
+  dollarComparison: DollarComparison | null;
+  dollarRates: { month: string; avgOficialVenta: number | null; avgBlueVenta: number | null }[];
+  warnings: AnnualYieldWarning[];
 }
 
 // ---- Index Comparison ----

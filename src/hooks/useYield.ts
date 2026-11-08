@@ -8,3 +8,11 @@ export function useYield(unitId: string) {
     enabled: !!unitId,
   });
 }
+
+export function useAnnualYield(unitId: string, year: number) {
+  return useQuery({
+    queryKey: ['yield', 'annual', unitId, year],
+    queryFn: () => yieldApi.annual(unitId, year),
+    enabled: !!unitId && year > 0,
+  });
+}

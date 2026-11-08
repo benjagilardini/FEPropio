@@ -42,7 +42,7 @@ function fmtFreqCapitalized(months: number): string {
 
 function fmtShortMonth(iso: string): string {
   const d = new Date(iso);
-  const name = d.toLocaleDateString('es-AR', { month: 'short' });
+  const name = d.toLocaleDateString('es-AR', { month: 'short', year: '2-digit' });
   return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
@@ -193,7 +193,9 @@ export default function IndexComparisonOverviewPage() {
         >
           {leases.map((lease) => (
             <MenuItem key={lease.id} value={lease.id}>
-              {lease.status === 'active' ? 'Contrato vigente' : 'Contrato finalizado'} (desde {formatDate(lease.startDate)})
+              {lease.status === 'active'
+              ? `Contrato vigente (desde ${formatDate(lease.startDate)})`
+              : `Contrato finalizado (${formatDate(lease.startDate)} — ${formatDate(lease.endDate)})`}
             </MenuItem>
           ))}
         </TextField>

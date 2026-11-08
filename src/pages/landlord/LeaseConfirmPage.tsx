@@ -48,7 +48,23 @@ const fieldLabels: Record<string, string> = {
   adjustmentFrequencyMonths: 'Periodicidad',
   propertyTaxAccount: 'Partida inmobiliaria',
   functionalUnit: 'Unidad funcional',
+  expenseResponsibility: 'Responsabilidad de gastos',
 };
+
+const expenseCategoryLabels: Record<string, string> = {
+  tax: 'Impuestos',
+  insurance: 'Seguros',
+  maintenance: 'Mantenimiento',
+  condominiumFees: 'Expensas',
+  other: 'Otros',
+};
+
+function formatExpenseResponsibility(value: unknown): string {
+  if (!Array.isArray(value)) return '-';
+  return value
+    .map((e: any) => `${expenseCategoryLabels[e.category] || e.category}: ${e.paidBy === 'landlord' ? 'Propietario' : 'Inquilino'}`)
+    .join(', ');
+}
 
 interface LeaseFormValues {
   tenantName: string;
@@ -300,7 +316,11 @@ export default function LeaseConfirmPage() {
                       <Button size="small" onClick={() => setEditingIndex(null)}>X</Button>
                     </Box>
                   ) : (
-                    <Typography variant="body2">{String(field.correctedValue ?? field.value ?? '')}</Typography>
+                    <Typography variant="body2">
+                      {field.fieldName === 'expenseResponsibility'
+                        ? formatExpenseResponsibility(field.correctedValue ?? field.value)
+                        : String(field.correctedValue ?? field.value ?? '')}
+                    </Typography>
                   )}
                 </Box>
                 <StatusChip status={field.status} />

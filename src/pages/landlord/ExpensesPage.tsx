@@ -27,6 +27,13 @@ const categoryOptions = [
 
 const categoryLabels: Record<string, string> = Object.fromEntries(categoryOptions.map((o) => [o.value, o.label]));
 
+const paidByOptions = [
+  { value: 'landlord', label: 'Propietario' },
+  { value: 'tenant', label: 'Inquilino' },
+];
+
+const paidByLabels: Record<string, string> = { landlord: 'Propietario', tenant: 'Inquilino' };
+
 export default function ExpensesPage() {
   const { unitId } = useParams<{ unitId: string }>();
   const [page, setPage] = useState(1);
@@ -36,7 +43,7 @@ export default function ExpensesPage() {
   const toast = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
   const { register, handleSubmit, control, reset } = useForm<ExpenseInput>({
-    defaultValues: { category: 'other' },
+    defaultValues: { category: 'other', paidBy: 'landlord' },
   });
 
   if (isLoading) return <LoadingSpinner />;
@@ -84,9 +91,10 @@ export default function ExpensesPage() {
               <TableHead>
                 <TableRow>
                   <TableCell>Fecha</TableCell>
-                  <TableCell>Categoria</TableCell>
+                  <TableCell>Categoría</TableCell>
                   <TableCell>Concepto</TableCell>
                   <TableCell>Importe</TableCell>
+                  <TableCell>A cargo de</TableCell>
                   <TableCell></TableCell>
                 </TableRow>
               </TableHead>
@@ -97,6 +105,7 @@ export default function ExpensesPage() {
                     <TableCell>{categoryLabels[e.category] || e.category}</TableCell>
                     <TableCell>{e.concept}</TableCell>
                     <TableCell>{formatCurrency(e.amount)}</TableCell>
+                    <TableCell>{paidByLabels[e.paidBy] || e.paidBy}</TableCell>
                     <TableCell>
                       <IconButton color="error" size="small" onClick={() => handleDelete(e.id)}>
                         <DeleteIcon />
@@ -134,6 +143,15 @@ export default function ExpensesPage() {
             />
             <TextField label="Concepto" {...register('concept', { required: true })} />
             <TextField label="Importe ($)" {...register('amount', { required: true })} />
+            <Controller
+              name="paidBy"
+              control={control}
+              render={({ field }) => (
+                <TextField select label="A cargo de" {...field}>
+                  {paidByOptions.map((o) => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}
+                </TextField>
+              )}
+            />
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setDialogOpen(false)}>Cancelar</Button>

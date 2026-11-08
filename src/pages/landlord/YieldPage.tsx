@@ -61,8 +61,8 @@ export default function YieldPage() {
                 </TableHead>
                 <TableBody>
                   {data.monthlyBreakdown.map((m) => (
-                    <TableRow key={m.period}>
-                      <TableCell>{formatPeriod(m.period)}</TableCell>
+                    <TableRow key={m.month}>
+                      <TableCell>{formatPeriod(m.month)}</TableCell>
                       <TableCell align="right">{formatCurrency(m.income)}</TableCell>
                       <TableCell align="right">{formatCurrency(m.expenses)}</TableCell>
                       <TableCell align="right">{formatCurrency(m.net)}</TableCell>
