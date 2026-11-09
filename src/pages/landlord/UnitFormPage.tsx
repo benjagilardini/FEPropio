@@ -10,6 +10,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { useUnit, useCreateUnit, useUpdateUnit } from '../../hooks/useUnits';
 import { useToast } from '../../context/ToastContext';
+import { getApiError } from '../../utils/getApiError';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import PageHeader from '../../components/common/PageHeader';
 import type { UnitInput } from '../../types';
@@ -66,7 +67,7 @@ export default function UnitFormPage() {
       reset({
         address: unit.address,
         unitType: unit.unitType,
-        areaSqm: unit.areaSqm,
+        areaSqm: unit.areaSqm ?? undefined,
         propertyTaxAccount: unit.propertyTaxAccount,
         functionalUnit: unit.functionalUnit,
         referenceValue: unit.referenceValue,
@@ -80,7 +81,6 @@ export default function UnitFormPage() {
   if (isEdit && isLoading) return <LoadingSpinner />;
 
   const onSubmit = async (data: UnitInput) => {
-    // Send null if all billing fields are empty
     const pa = data.paymentAccount;
     if (pa && !pa.holderName && !pa.bank && !pa.cbuOrCvu) {
       data.paymentAccount = null;
@@ -95,18 +95,9 @@ export default function UnitFormPage() {
         toast.success('Unidad creada correctamente');
         navigate(`/units/${created.id}`);
       }
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Error al guardar la unidad');
+    } catch (err: unknown) {
+      toast.error(getApiError(err, 'Error al guardar la unidad'));
     }
-  };
-
-  // Build a single-line address preview
-  const buildAddressPreview = () => {
-    const a = watch('address');
-    const parts = [`${a.street} ${a.number}`.trim()];
-    if (a.floor) parts.push(`${a.floor}°`);
-    if (a.apartment) parts.push(a.apartment);
-    return parts.filter(Boolean).join(', ');
   };
 
   return (
@@ -122,25 +113,19 @@ export default function UnitFormPage() {
 
       <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3, alignItems: 'start' }}>
-          {/* ── Left column ── */}
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            {/* Admin data */}
             <Paper variant="outlined" sx={{ p: 3, borderColor: 'divider' }}>
               <Typography sx={sectionSx}>Datos administrativos</Typography>
 
-              {/* Address — single visual row */}
               <TextField
                 fullWidth
                 label="Dirección"
                 placeholder="Ej: Rondeau 215, PB 1"
                 sx={{ mb: 2 }}
                 {...register('address.street', { required: true })}
-                InputProps={{
-                  // We use street as the main field but combine number/floor/apt below
-                }}
+                slotProps={{ input: {} }}
               />
 
-              {/* Number / Floor / Apt */}
               <Grid container spacing={2} sx={{ mb: 2 }}>
                 <Grid size={{ xs: 4 }}>
                   <TextField fullWidth label="Número" {...register('address.number', { required: true })} />
@@ -153,7 +138,6 @@ export default function UnitFormPage() {
                 </Grid>
               </Grid>
 
-              {/* City / Province / Neighborhood */}
               <Grid container spacing={2} sx={{ mb: 2 }}>
                 <Grid size={{ xs: 4 }}>
                   <TextField fullWidth label="Ciudad" {...register('address.city', { required: true })} />
@@ -190,7 +174,6 @@ export default function UnitFormPage() {
               </Grid>
             </Paper>
 
-            {/* Facility locations */}
             <Paper variant="outlined" sx={{ p: 3, borderColor: 'divider' }}>
               <Typography sx={sectionSx}>Ubicación de instalaciones</Typography>
               <Grid container spacing={2}>
@@ -210,9 +193,7 @@ export default function UnitFormPage() {
             </Paper>
           </Box>
 
-          {/* ── Right column ── */}
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            {/* Utilities */}
             <Paper variant="outlined" sx={{ p: 3, borderColor: 'divider' }}>
               <Typography sx={sectionSx}>Suministros</Typography>
               <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
@@ -220,7 +201,7 @@ export default function UnitFormPage() {
               </Typography>
 
               {fields.map((field, index) => {
-                const utilityType = watch(`utilityAccounts.${index}.utilityType`);
+                const utilityType = watch(`utilityAccounts.${index}.utilityType` as const);
                 return (
                   <Box key={field.id}>
                     {index > 0 && <Divider sx={{ my: 2 }} />}
@@ -235,7 +216,7 @@ export default function UnitFormPage() {
                         />
                         <TextField
                           fullWidth
-                          label={accountLabel[utilityType] || 'N° de cuenta'}
+                          label={utilityType ? accountLabel[utilityType] : 'N° de cuenta'}
                           {...register(`utilityAccounts.${index}.accountId`)}
                         />
                         <Grid container spacing={2} sx={{ mt: 0.5 }}>
@@ -285,7 +266,6 @@ export default function UnitFormPage() {
               </Button>
             </Paper>
 
-            {/* Billing */}
             <Paper variant="outlined" sx={{ p: 3, borderColor: 'divider' }}>
               <Typography sx={sectionSx}>Datos de facturación</Typography>
               <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
@@ -303,7 +283,6 @@ export default function UnitFormPage() {
               </Grid>
             </Paper>
 
-            {/* Property value */}
             <Paper variant="outlined" sx={{ p: 3, borderColor: 'divider' }}>
               <Typography sx={sectionSx}>Valor de la propiedad</Typography>
               <TextField
@@ -316,7 +295,6 @@ export default function UnitFormPage() {
           </Box>
         </Box>
 
-        {/* Action buttons */}
         <Box sx={{ display: 'flex', gap: 2, mt: 3, justifyContent: 'flex-end' }}>
           <Button onClick={() => navigate(-1)} sx={{ textTransform: 'uppercase', fontWeight: 600 }}>
             Cancelar

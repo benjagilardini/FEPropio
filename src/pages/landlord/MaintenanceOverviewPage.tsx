@@ -22,17 +22,9 @@ import StatusChip from '../../components/common/StatusChip';
 import PageHeader from '../../components/common/PageHeader';
 import { formatDateTime } from '../../utils/formatDate';
 import { useForm, Controller } from 'react-hook-form';
-import type { MaintenanceStatus, Unit, MaintenanceRequest } from '../../types';
-
-/* ---- helpers ---- */
-
-function fmtAddress(unit: Unit): string {
-  const a = unit.address;
-  let s = `${a.street} ${a.number}`;
-  if (a.floor) s += `, ${a.floor}.°`;
-  if (a.apartment) s += ` ${a.apartment}`;
-  return s;
-}
+import { formatAddress } from '../../utils/formatAddress';
+import { getApiError } from '../../utils/getApiError';
+import type { MaintenanceStatus, MaintenanceRequest } from '../../types';
 
 const categoryOptions = [
   { value: 'plumbing', label: 'Plomería', icon: <PlumbingIcon sx={{ fontSize: 20 }} /> },
@@ -55,8 +47,6 @@ const VALID_NEXT: Record<string, MaintenanceStatus[]> = {
   inProgress: ['resolved'],
   resolved: ['closed'],
 };
-
-/* ---- page ---- */
 
 export default function MaintenanceOverviewPage() {
   const { data: unitsData, isLoading: unitsLoading } = useUnits(1);
@@ -119,8 +109,8 @@ export default function MaintenanceOverviewPage() {
       toast.success('Estado actualizado');
       setStatusDialog(null);
       reset();
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Error al cambiar el estado');
+    } catch (err: unknown) {
+      toast.error(getApiError(err, 'Error al cambiar el estado'));
     }
   };
 
@@ -139,7 +129,6 @@ export default function MaintenanceOverviewPage() {
         />
       ) : (
         <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
-          {/* Controls */}
           <Box sx={{ flexShrink: 0, display: 'flex', alignItems: 'flex-end', gap: 2, mb: 2, flexWrap: 'wrap' }}>
             <TextField
               select
@@ -151,7 +140,7 @@ export default function MaintenanceOverviewPage() {
             >
               {occupiedUnits.map((u) => (
                 <MenuItem key={u.id} value={u.id}>
-                  {fmtAddress(u)}{u.tenant?.name ? ` — ${u.tenant.name}` : ''}
+                  {formatAddress(u)}{u.tenant?.name ? ` — ${u.tenant.name}` : ''}
                 </MenuItem>
               ))}
             </TextField>
@@ -169,7 +158,6 @@ export default function MaintenanceOverviewPage() {
             )}
           </Box>
 
-          {/* Body */}
           {!selectedUnitId ? (
             <EmptyState message="Seleccioná una unidad." />
           ) : loading ? (
@@ -190,7 +178,6 @@ export default function MaintenanceOverviewPage() {
 
                 return (
                   <Paper key={r.id} variant="outlined" sx={{ borderColor: 'divider', overflow: 'hidden' }}>
-                    {/* Row header */}
                     <Box
                       onClick={() => setExpanded(isOpen ? null : r.id)}
                       sx={{
@@ -233,7 +220,6 @@ export default function MaintenanceOverviewPage() {
                       </IconButton>
                     </Box>
 
-                    {/* Expanded detail */}
                     <Collapse in={isOpen}>
                       <Divider />
                       <Box sx={{ px: 2.5, py: 2 }}>
@@ -270,7 +256,6 @@ export default function MaintenanceOverviewPage() {
         </Box>
       )}
 
-      {/* Status change dialog */}
       <Dialog open={!!statusDialog} onClose={() => setStatusDialog(null)} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ fontWeight: 700, pb: 0.5 }}>
           Actualizar reclamo
@@ -313,8 +298,6 @@ export default function MaintenanceOverviewPage() {
     </Box>
   );
 }
-
-/* ---- small components ---- */
 
 function TabLabel({ text, count, color }: { text: string; count: number; color: 'primary' | 'success' }) {
   return (

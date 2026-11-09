@@ -9,23 +9,17 @@ import {
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import { useMaintenanceRequests, useUpdateMaintenanceStatus } from '../../hooks/useMaintenance';
+import { maintenanceApi } from '../../api/maintenanceApi';
 import { useToast } from '../../context/ToastContext';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
 import PageHeader from '../../components/common/PageHeader';
 import StatusChip from '../../components/common/StatusChip';
 import { formatDateTime } from '../../utils/formatDate';
+import { getApiError } from '../../utils/getApiError';
+import { maintenanceCategoryLabels } from '../../constants/labels';
 import { useForm, Controller } from 'react-hook-form';
 import type { MaintenanceStatus } from '../../types';
-
-const categoryLabels: Record<string, string> = {
-  plumbing: 'Plomeria',
-  electrical: 'Electricidad',
-  gas: 'Gas',
-  structural: 'Estructura',
-  appliance: 'Electrodomestico',
-  other: 'Otro',
-};
 
 const statusOptions: { value: MaintenanceStatus; label: string }[] = [
   { value: 'inProgress', label: 'En progreso' },
@@ -59,8 +53,8 @@ export default function MaintenancePage() {
       toast.success('Estado del reclamo actualizado');
       setStatusDialog(null);
       reset();
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Error al cambiar el estado');
+    } catch (err: unknown) {
+      toast.error(getApiError(err, 'Error al cambiar el estado'));
     }
   };
 
@@ -89,12 +83,12 @@ export default function MaintenancePage() {
                   <>
                     <TableRow key={r.id}>
                       <TableCell>{r.code}</TableCell>
-                      <TableCell>{categoryLabels[r.category] || r.category}</TableCell>
+                      <TableCell>{maintenanceCategoryLabels[r.category] || r.category}</TableCell>
                       <TableCell>{r.room}</TableCell>
                       <TableCell><StatusChip status={r.status} /></TableCell>
                       <TableCell>{formatDateTime(r.createdAt)}</TableCell>
                       <TableCell>
-                        <Box display="flex" gap={1}>
+                        <Box sx={{ display: 'flex', gap: 1 }}>
                           <Button size="small" onClick={() => setExpanded(expanded === r.id ? null : r.id)}>
                             {expanded === r.id ? <ExpandLessIcon /> : <ExpandMoreIcon />}
                           </Button>
@@ -110,9 +104,30 @@ export default function MaintenancePage() {
                       <TableCell colSpan={6} sx={{ py: 0 }}>
                         <Collapse in={expanded === r.id}>
                           <Box sx={{ py: 2 }}>
-                            <Typography variant="body2" fontWeight="bold">Descripcion:</Typography>
+                            <Typography variant="body2" sx={{ fontWeight: 'bold' }}>Descripción:</Typography>
                             <Typography variant="body2" sx={{ mb: 2 }}>{r.description}</Typography>
-                            <Typography variant="body2" fontWeight="bold">Historial:</Typography>
+                            {r.photos.length > 0 && (
+                              <>
+                                <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>Fotos:</Typography>
+                                <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+                                  {r.photos.map((p) => {
+                                    const url = `${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}${maintenanceApi.getPhotoUrl(leaseId!, r.id, p.index)}`;
+                                    return (
+                                      <Box
+                                        key={p.index}
+                                        component="img"
+                                        crossOrigin="use-credentials"
+                                        src={url}
+                                        alt={p.fileName}
+                                        sx={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 1.5, cursor: 'pointer', border: '1px solid', borderColor: 'divider' }}
+                                        onClick={() => window.open(url, '_blank')}
+                                      />
+                                    );
+                                  })}
+                                </Box>
+                              </>
+                            )}
+                            <Typography variant="body2" sx={{ fontWeight: 'bold' }}>Historial:</Typography>
                             <List dense>
                               {r.statusHistory.map((h, i) => (
                                 <ListItem key={i}>
@@ -133,7 +148,7 @@ export default function MaintenancePage() {
             </Table>
           </TableContainer>
           {totalPages > 1 && (
-            <Box display="flex" justifyContent="center" mt={2}>
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
               <MuiPagination count={totalPages} page={page} onChange={(_, p) => setPage(p)} />
             </Box>
           )}

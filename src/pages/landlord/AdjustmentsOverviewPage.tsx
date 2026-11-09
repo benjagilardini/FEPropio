@@ -15,23 +15,9 @@ import PageHeader from '../../components/common/PageHeader';
 import StatusChip from '../../components/common/StatusChip';
 import { formatCurrency } from '../../utils/formatCurrency';
 import { formatDate } from '../../utils/formatDate';
+import { formatAddress } from '../../utils/formatAddress';
+import { formatFreq } from '../../utils/formatters';
 import type { Unit, Lease, RentAdjustment } from '../../types';
-
-function formatAddress(unit: Unit): string {
-  const a = unit.address;
-  let addr = `${a.street} ${a.number}`;
-  if (a.floor) addr += `, ${a.floor}.°`;
-  if (a.apartment) addr += ` ${a.apartment}`;
-  return addr;
-}
-
-function formatFreq(months: number): string {
-  if (months === 3) return 'trimestral';
-  if (months === 4) return 'cuatrimestral';
-  if (months === 6) return 'semestral';
-  if (months === 12) return 'anual';
-  return `cada ${months} meses`;
-}
 
 interface AdjustmentRow {
   unit: Unit;
@@ -53,7 +39,6 @@ export default function AdjustmentsOverviewPage() {
   const units = unitsData?.data || [];
   const occupiedUnits = units.filter((u) => u.isOccupied);
 
-  // Fetch leases for each occupied unit
   const leaseQueries = useQueries({
     queries: occupiedUnits.map((unit) => ({
       queryKey: ['leases', 'unit', unit.id, 1],
@@ -61,7 +46,6 @@ export default function AdjustmentsOverviewPage() {
     })),
   });
 
-  // Build unit -> active lease map
   const unitLeaseMap = new Map<string, Lease>();
   occupiedUnits.forEach((unit, i) => {
     const active = leaseQueries[i]?.data?.data?.find((l) => l.status === 'active');
@@ -69,7 +53,6 @@ export default function AdjustmentsOverviewPage() {
   });
   const activeLeases = Array.from(unitLeaseMap.values());
 
-  // Fetch adjustments for each active lease
   const adjustmentQueries = useQueries({
     queries: activeLeases.map((lease) => ({
       queryKey: ['adjustments', lease.id, 1],
@@ -77,7 +60,6 @@ export default function AdjustmentsOverviewPage() {
     })),
   });
 
-  // Build rows: only the next upcoming adjustment per unit + confirmed history
   const upcomingRows: AdjustmentRow[] = [];
   const appliedRows: AdjustmentRow[] = [];
 
@@ -86,15 +68,13 @@ export default function AdjustmentsOverviewPage() {
     const unit = occupiedUnits.find((u) => unitLeaseMap.get(u.id)?.id === lease.id);
     if (!unit || !adjData) return;
 
-    // Sort by date ascending to find the first non-confirmed
     const sorted = [...adjData].sort((a, b) => a.effectiveDate.localeCompare(b.effectiveDate));
 
     let nextFound = false;
     for (const adj of sorted) {
-      if (adj.status === 'confirmed') {
+      if (adj.status === 'final') {
         appliedRows.push({ unit, lease, adjustment: adj });
       } else if (!nextFound) {
-        // Only take the first (nearest) upcoming adjustment per lease
         upcomingRows.push({ unit, lease, adjustment: adj });
         nextFound = true;
       }
@@ -126,7 +106,6 @@ export default function AdjustmentsOverviewPage() {
         <LoadingSpinner />
       ) : (
         <>
-          {/* Upcoming adjustments */}
           {upcomingRows.length > 0 && (
             <>
               <Typography sx={{ fontWeight: 700, fontSize: '1.05rem', mb: 2 }}>
@@ -191,7 +170,6 @@ export default function AdjustmentsOverviewPage() {
             </>
           )}
 
-          {/* Applied adjustments */}
           {appliedRows.length > 0 && (
             <>
               <Typography sx={{ fontWeight: 700, fontSize: '1.05rem', mb: 2 }}>
@@ -240,7 +218,7 @@ export default function AdjustmentsOverviewPage() {
                         <TableCell>
                           {row.adjustment.updatedAt && (
                             <StatusChip
-                              status="confirmed"
+                              status="final"
                               variant="outlined"
                             />
                           )}
@@ -260,7 +238,6 @@ export default function AdjustmentsOverviewPage() {
             />
           )}
 
-          {/* Info box */}
           <Box
             sx={{
               display: 'flex',

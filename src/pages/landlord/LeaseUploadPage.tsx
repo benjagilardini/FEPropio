@@ -14,6 +14,7 @@ import IconButton from '@mui/material/IconButton';
 import { useUnit } from '../../hooks/useUnits';
 import { useCreateLease, useExtractLease, useLeasesByUnit } from '../../hooks/useLeases';
 import { useToast } from '../../context/ToastContext';
+import { getApiError } from '../../utils/getApiError';
 import PageHeader from '../../components/common/PageHeader';
 import type { Unit } from '../../types';
 
@@ -91,7 +92,6 @@ export default function LeaseUploadPage() {
     setIsProcessing(true);
 
     try {
-      // Step 1: Upload & create lease
       setStepState(0, 0);
 
       const existingDraft = leasesData?.data?.find((l) => l.status === 'draft');
@@ -117,15 +117,13 @@ export default function LeaseUploadPage() {
       setCreatedLeaseId(leaseId);
       setStepState(1, 1);
 
-      // Step 2-3: Extract with AI
       setStepState(2, 2);
       await extractMutation.mutateAsync(leaseId);
 
-      // Step 4: Done
       setStepState(-1, 4);
       setExtractionDone(true);
-    } catch (err: any) {
-      const msg = err.response?.data?.message || 'Error al procesar el documento';
+    } catch (err: unknown) {
+      const msg = getApiError(err, 'Error al procesar el documento');
       setError(msg);
       toast.error(msg);
     } finally {
@@ -181,7 +179,6 @@ export default function LeaseUploadPage() {
         subtitle={unitSubtitle}
       />
 
-      {/* Stepper */}
       <Stepper activeStep={0} sx={{ mb: 4 }}>
         {steps.map((label) => (
           <Step key={label}>
@@ -193,14 +190,12 @@ export default function LeaseUploadPage() {
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3, alignItems: 'start' }}>
-        {/* Left: Document upload */}
         <Paper variant="outlined" sx={{ p: 3, borderColor: 'divider' }}>
           <Typography sx={{ fontWeight: 700, fontSize: '1.05rem', mb: 1 }}>Documento del contrato</Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
             El documento queda vinculado a la unidad y disponible para ambas partes, también después de que el contrato finalice.
           </Typography>
 
-          {/* Drop zone */}
           {!file && (
             <Box
               onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
@@ -239,7 +234,6 @@ export default function LeaseUploadPage() {
             onChange={(e) => handleFiles(e.target.files)}
           />
 
-          {/* Uploaded file preview */}
           {file && (
             <Box
               sx={{
@@ -277,7 +271,6 @@ export default function LeaseUploadPage() {
           )}
         </Paper>
 
-        {/* Right: Extraction progress */}
         <Paper variant="outlined" sx={{ p: 3, borderColor: 'divider' }}>
           <Typography sx={{ fontWeight: 700, fontSize: '1.05rem', mb: 2 }}>
             Progreso de la extracción
@@ -327,7 +320,6 @@ export default function LeaseUploadPage() {
         </Paper>
       </Box>
 
-      {/* Buttons */}
       <Box sx={{ display: 'flex', gap: 2, mt: 3, justifyContent: 'flex-end' }}>
         <Button onClick={() => navigate(`/units/${unitId}`)} sx={{ textTransform: 'uppercase', fontWeight: 600 }}>
           Cancelar

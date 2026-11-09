@@ -15,30 +15,9 @@ import EmptyState from '../../components/common/EmptyState';
 import PageHeader from '../../components/common/PageHeader';
 import { formatCurrency } from '../../utils/formatCurrency';
 import { formatDate } from '../../utils/formatDate';
+import { formatAddress } from '../../utils/formatAddress';
+import { frequencyLabels } from '../../constants/labels';
 import type { Unit, Lease, AdjustmentIndex } from '../../types';
-
-/* ---- helpers ---- */
-
-function fmtAddress(unit: Unit): string {
-  const a = unit.address;
-  let s = `${a.street} ${a.number}`;
-  if (a.floor) s += `, ${a.floor}.°`;
-  if (a.apartment) s += ` ${a.apartment}`;
-  return s;
-}
-
-function fmtFreq(months: number): string {
-  if (months === 3) return 'trimestral';
-  if (months === 4) return 'cuatrimestral';
-  if (months === 6) return 'semestral';
-  if (months === 12) return 'anual';
-  return `cada ${months} meses`;
-}
-
-function fmtFreqCapitalized(months: number): string {
-  const s = fmtFreq(months);
-  return s.charAt(0).toUpperCase() + s.slice(1);
-}
 
 function fmtShortMonth(iso: string): string {
   const d = new Date(iso);
@@ -64,8 +43,6 @@ const headerCellSx = {
   fontSize: '0.8rem',
 };
 
-/* ---- component ---- */
-
 export default function IndexComparisonOverviewPage() {
   const [selectedUnitId, setSelectedUnitId] = useState<string>('');
   const [selectedLeaseId, setSelectedLeaseId] = useState<string>('');
@@ -83,14 +60,12 @@ export default function IndexComparisonOverviewPage() {
     [leasesData],
   );
 
-  // Auto-select first occupied unit
   useEffect(() => {
     if (!selectedUnitId && units.length > 0) {
       setSelectedUnitId(units[0].id);
     }
   }, [units, selectedUnitId]);
 
-  // Auto-select active lease when unit changes
   useEffect(() => {
     if (leases.length > 0) {
       const active = leases.find((l) => l.status === 'active');
@@ -100,9 +75,8 @@ export default function IndexComparisonOverviewPage() {
     }
   }, [leases]);
 
-  const selectedLease = leases.find((l) => l.id === selectedLeaseId);
 
-  // Build chart data: merge all 3 indices' histories into a unified timeline
+
   const chartData = useMemo(() => {
     if (!comparisonData) return [];
 
@@ -119,19 +93,18 @@ export default function IndexComparisonOverviewPage() {
       }
     }
 
-    // Sort by date and forward-fill missing values
     const sorted = Array.from(dateMap.entries())
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([date, values]) => ({ date, ...values }));
 
-    // Forward-fill so lines are continuous
     const prev: Record<string, number> = {};
     for (const row of sorted) {
+      const mutableRow = row as Record<string, unknown>;
       for (const idx of indices) {
-        if (row[idx] != null) {
-          prev[idx] = row[idx] as number;
+        if (mutableRow[idx] != null) {
+          prev[idx] = mutableRow[idx] as number;
         } else if (prev[idx] != null) {
-          (row as any)[idx] = prev[idx];
+          mutableRow[idx] = prev[idx];
         }
       }
     }
@@ -144,7 +117,6 @@ export default function IndexComparisonOverviewPage() {
   const contractedIndex = comparisonData?.contractedIndex;
   const freqMonths = comparisonData?.frequencyMonths;
 
-  // Calculate differences vs contracted index
   const getDifference = (idx: AdjustmentIndex) => {
     if (!comparisonData || !contractedIndex || idx === contractedIndex) return null;
     const contracted = comparisonData[contractedIndex];
@@ -164,7 +136,6 @@ export default function IndexComparisonOverviewPage() {
         subtitle="Cómo habría evolucionado el alquiler con otros índices, con la misma periodicidad y fecha de inicio del contrato."
       />
 
-      {/* Selectors */}
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2, mb: 3 }}>
         <TextField
           select
@@ -178,7 +149,7 @@ export default function IndexComparisonOverviewPage() {
         >
           {units.map((unit) => (
             <MenuItem key={unit.id} value={unit.id}>
-              {fmtAddress(unit)}
+              {formatAddress(unit)}
             </MenuItem>
           ))}
         </TextField>
@@ -201,7 +172,6 @@ export default function IndexComparisonOverviewPage() {
         </TextField>
       </Box>
 
-      {/* States */}
       {!selectedUnitId && (
         <Typography variant="body1" color="text.secondary">
           Seleccioná una unidad para comparar índices.
@@ -224,10 +194,8 @@ export default function IndexComparisonOverviewPage() {
         />
       )}
 
-      {/* Chart + Table */}
       {comparisonData && (
         <>
-          {/* Chart */}
           <Paper variant="outlined" sx={{ p: 3, borderColor: 'divider', mb: 3 }}>
             <Typography sx={{ fontWeight: 700, fontSize: '1.05rem', mb: 2 }}>
               Evolución del alquiler
@@ -251,11 +219,11 @@ export default function IndexComparisonOverviewPage() {
                   width={80}
                 />
                 <Tooltip
-                  formatter={(value: number, name: string) => [
-                    formatCurrency(value),
+                  formatter={(value, name) => [
+                    formatCurrency(value as number),
                     `${name}${name === contractedIndex ? ' (pactado)' : ''}`,
                   ]}
-                  labelFormatter={(label: string) => formatDate(label)}
+                  labelFormatter={(label) => formatDate(String(label))}
                 />
                 <Legend
                   formatter={(value: string) =>
@@ -278,7 +246,6 @@ export default function IndexComparisonOverviewPage() {
             </ResponsiveContainer>
           </Paper>
 
-          {/* Comparison table */}
           <TableContainer component={Paper} variant="outlined" sx={{ borderColor: 'divider' }}>
             <Table>
               <TableHead>
@@ -302,7 +269,7 @@ export default function IndexComparisonOverviewPage() {
                         <Typography variant="body2" sx={{ fontWeight: 600 }}>{idx}</Typography>
                         <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                           {isContracted ? 'Pactado · ' : ''}
-                          {freqMonths ? fmtFreqCapitalized(freqMonths) : ''}
+                          {freqMonths ? (frequencyLabels[freqMonths] || `Cada ${freqMonths} meses`) : ''}
                         </Typography>
                       </TableCell>
                       <TableCell>

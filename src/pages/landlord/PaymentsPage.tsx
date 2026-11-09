@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
-  Box, Typography, Paper, Table, TableBody, TableCell, TableContainer,
+  Box, Paper, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Button, TextField, Dialog, DialogTitle,
   DialogContent, DialogActions, Pagination as MuiPagination,
 } from '@mui/material';
@@ -9,6 +9,7 @@ import CheckIcon from '@mui/icons-material/Check';
 import FlagIcon from '@mui/icons-material/Flag';
 import { usePayments, useConfirmPayment, useFlagPayment } from '../../hooks/usePayments';
 import { useToast } from '../../context/ToastContext';
+import { getApiError } from '../../utils/getApiError';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
 import PageHeader from '../../components/common/PageHeader';
@@ -36,8 +37,8 @@ export default function PaymentsPage() {
     try {
       await confirmMut.mutateAsync({ leaseId: leaseId!, paymentId });
       toast.success('Pago confirmado');
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Error al confirmar el pago');
+    } catch (err: unknown) {
+      toast.error(getApiError(err, 'Error al confirmar el pago'));
     }
   };
 
@@ -48,8 +49,8 @@ export default function PaymentsPage() {
       toast.warning('Pago observado');
       setFlagDialog(null);
       setReviewNote('');
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Error al observar el pago');
+    } catch (err: unknown) {
+      toast.error(getApiError(err, 'Error al observar el pago'));
     }
   };
 
@@ -85,7 +86,7 @@ export default function PaymentsPage() {
                     <TableCell>{p.reviewNote || '-'}</TableCell>
                     <TableCell>
                       {p.status === 'submitted' && (
-                        <Box display="flex" gap={1}>
+                        <Box sx={{ display: 'flex', gap: 1 }}>
                           <Button
                             size="small" variant="outlined" color="success" startIcon={<CheckIcon />}
                             onClick={() => handleConfirm(p.id)}
@@ -107,7 +108,7 @@ export default function PaymentsPage() {
             </Table>
           </TableContainer>
           {totalPages > 1 && (
-            <Box display="flex" justifyContent="center" mt={2}>
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
               <MuiPagination count={totalPages} page={page} onChange={(_, p) => setPage(p)} />
             </Box>
           )}

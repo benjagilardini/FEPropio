@@ -16,15 +16,8 @@ import EmptyState from '../../components/common/EmptyState';
 import PageHeader from '../../components/common/PageHeader';
 import StatusChip from '../../components/common/StatusChip';
 import { formatCurrency } from '../../utils/formatCurrency';
+import { formatAddress } from '../../utils/formatAddress';
 import type { Unit } from '../../types';
-
-function formatAddress(unit: Unit): string {
-  const a = unit.address;
-  let addr = `${a.street} ${a.number}`;
-  if (a.floor) addr += `, ${a.floor}.°`;
-  if (a.apartment) addr += ` ${a.apartment}`;
-  return addr;
-}
 
 function formatAddressSecondary(unit: Unit): string | null {
   const parts: string[] = [];
@@ -78,7 +71,6 @@ export default function UnitsPage() {
         />
       ) : (
         <>
-          {/* Stat cards */}
           <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2, mb: 3 }}>
             {statCards.map(({ key, label, icon: Icon, color }) => (
               <Paper
@@ -118,7 +110,6 @@ export default function UnitsPage() {
             ))}
           </Box>
 
-          {/* Units table */}
           <TableContainer
             component={Paper}
             variant="outlined"

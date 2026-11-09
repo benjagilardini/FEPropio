@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Box, Typography, Paper, Button,
+  Box, Typography, Paper, Button, MenuItem,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField,
 } from '@mui/material';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
@@ -13,40 +13,15 @@ import { useUnit } from '../../hooks/useUnits';
 import { useAdjustments } from '../../hooks/useAdjustments';
 import { useToast } from '../../context/ToastContext';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
-import ConfirmDialog from '../../components/common/ConfirmDialog';
 import PageHeader from '../../components/common/PageHeader';
 import StatusChip from '../../components/common/StatusChip';
+import { KVRow, KVTable } from '../../components/common/KVTable';
 import { formatCurrency } from '../../utils/formatCurrency';
 import { formatDate } from '../../utils/formatDate';
+import { formatAddress } from '../../utils/formatAddress';
+import { formatFreq } from '../../utils/formatters';
+import { getApiError } from '../../utils/getApiError';
 import { useForm } from 'react-hook-form';
-import type { Unit } from '../../types';
-
-function formatAddress(unit: Unit): string {
-  const a = unit.address;
-  let addr = `${a.street} ${a.number}`;
-  if (a.floor) addr += `, ${a.floor}.°`;
-  if (a.apartment) addr += ` ${a.apartment}`;
-  return addr;
-}
-
-function formatFreq(months: number): string {
-  if (months === 3) return 'trimestral';
-  if (months === 6) return 'semestral';
-  if (months === 12) return 'anual';
-  return `cada ${months} meses`;
-}
-
-function KVRow({ label, value }: { label: string; value?: string | null }) {
-  if (!value) return null;
-  return (
-    <Box sx={{ display: 'flex', py: 0.75 }}>
-      <Typography variant="body2" sx={{ color: 'text.secondary', width: 160, flexShrink: 0 }}>
-        {label}
-      </Typography>
-      <Typography variant="body2">{value}</Typography>
-    </Box>
-  );
-}
 
 const sectionTitle = { fontWeight: 700, fontSize: '1.05rem', mb: 1.5 };
 
@@ -60,7 +35,9 @@ export default function LeaseDetailPage() {
   const inviteMut = useInviteTenant();
   const toast = useToast();
 
-  const [confirmEnd, setConfirmEnd] = useState(false);
+  const [endDialogOpen, setEndDialogOpen] = useState(false);
+  const [restitutionDate, setRestitutionDate] = useState('');
+  const [unitDestination, setUnitDestination] = useState<'vacant' | 'renew' | ''>('');
   const [inviteOpen, setInviteOpen] = useState(false);
   const { register, handleSubmit, reset } = useForm<{ email: string; tenantName: string; tenantDni: string }>();
 
@@ -72,10 +49,17 @@ export default function LeaseDetailPage() {
 
   const handleEndLease = async () => {
     try {
-      await endLeaseMut.mutateAsync(leaseId!);
+      await endLeaseMut.mutateAsync({
+        leaseId: leaseId!,
+        data: {
+          restitutionDate: restitutionDate || undefined,
+          unitDestination: unitDestination || undefined,
+        },
+      });
       toast.success('Contrato finalizado correctamente');
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Error al finalizar');
+      setEndDialogOpen(false);
+    } catch (err: unknown) {
+      toast.error(getApiError(err, 'Error al finalizar'));
     }
   };
 
@@ -85,8 +69,8 @@ export default function LeaseDetailPage() {
       toast.success('Invitación enviada');
       setInviteOpen(false);
       reset();
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Error al invitar');
+    } catch (err: unknown) {
+      toast.error(getApiError(err, 'Error al invitar'));
     }
   };
 
@@ -109,7 +93,7 @@ export default function LeaseDetailPage() {
               </Button>
             )}
             {lease.status === 'active' && (
-              <Button variant="outlined" color="error" onClick={() => setConfirmEnd(true)}>
+              <Button variant="outlined" color="error" onClick={() => setEndDialogOpen(true)}>
                 Finalizar contrato
               </Button>
             )}
@@ -117,40 +101,55 @@ export default function LeaseDetailPage() {
         }
       />
 
-      {/* Two independent columns */}
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '7fr 5fr' }, gap: 3, alignItems: 'start' }}>
-        {/* Left column */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           <Paper variant="outlined" sx={{ p: 3, borderColor: 'divider' }}>
             <Typography sx={sectionTitle}>Datos del contrato</Typography>
-            <KVRow label="Vigencia" value={`${formatDate(lease.startDate)} – ${formatDate(lease.endDate)}`} />
-            <KVRow label="Alquiler inicial" value={formatCurrency(lease.initialRent)} />
-            <KVRow label="Índice de ajuste" value={`${lease.adjustmentIndex} · ${formatFreq(lease.adjustmentFrequencyMonths)}`} />
-            {lease.securityDeposit && (
-              <KVRow label="Depósito" value={formatCurrency(lease.securityDeposit)} />
-            )}
+            <KVTable>
+              <KVRow label="Vigencia" value={`${formatDate(lease.startDate)} – ${formatDate(lease.endDate)}`} />
+              <KVRow label="Alquiler inicial" value={formatCurrency(lease.initialRent)} />
+              <KVRow label="Índice de ajuste" value={`${lease.adjustmentIndex} · ${formatFreq(lease.adjustmentFrequencyMonths)}`} />
+              {lease.securityDeposit && (
+                <KVRow label="Depósito" value={formatCurrency(lease.securityDeposit)} />
+              )}
+              {lease.endedAt && (
+                <>
+                  <KVRow label="Finalizado" value={formatDate(lease.endedAt)} />
+                  {lease.restitutionDate && (
+                    <KVRow label="Restitución" value={formatDate(lease.restitutionDate)} />
+                  )}
+                  {lease.unitDestination && (
+                    <KVRow label="Destino" value={lease.unitDestination === 'renew' ? 'Se renueva contrato' : 'Queda vacante'} />
+                  )}
+                </>
+              )}
+            </KVTable>
           </Paper>
 
           {lease.paymentAccount && (
             <Paper variant="outlined" sx={{ p: 3, borderColor: 'divider' }}>
               <Typography sx={sectionTitle}>Datos de cobro</Typography>
-              <KVRow label="Titular" value={lease.paymentAccount.holderName} />
-              <KVRow label="Banco" value={lease.paymentAccount.bank} />
-              <KVRow label="CBU/CVU" value={lease.paymentAccount.cbuOrCvu} />
-              {lease.paymentAccount.alias && (
-                <KVRow label="Alias" value={lease.paymentAccount.alias} />
-              )}
+              <KVTable>
+                <KVRow label="Titular" value={lease.paymentAccount.holderName} />
+                <KVRow label="Banco" value={lease.paymentAccount.bank} />
+                <KVRow label="CBU/CVU" value={lease.paymentAccount.cbuOrCvu} />
+                {lease.paymentAccount.alias && (
+                  <KVRow label="Alias" value={lease.paymentAccount.alias} />
+                )}
+              </KVTable>
             </Paper>
           )}
 
           {lease.status === 'active' && nextAdjustment && (
             <Paper variant="outlined" sx={{ p: 3, borderColor: 'divider' }}>
               <Typography sx={sectionTitle}>Próximo ajuste</Typography>
-              <KVRow label="Fecha efectiva" value={formatDate(nextAdjustment.effectiveDate)} />
-              <KVRow
-                label="Rango estimado"
-                value={`${formatCurrency(nextAdjustment.minAmount)} – ${formatCurrency(nextAdjustment.maxAmount)}`}
-              />
+              <KVTable>
+                <KVRow label="Fecha efectiva" value={formatDate(nextAdjustment.effectiveDate)} />
+                <KVRow
+                  label="Rango estimado"
+                  value={`${formatCurrency(nextAdjustment.minAmount)} – ${formatCurrency(nextAdjustment.maxAmount)}`}
+                />
+              </KVTable>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mt: 1 }}>
                 <StatusChip status={nextAdjustment.status} />
                 <Button
@@ -167,16 +166,15 @@ export default function LeaseDetailPage() {
           )}
         </Box>
 
-        {/* Right column */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           <Paper variant="outlined" sx={{ p: 3, borderColor: 'divider' }}>
             <Typography sx={sectionTitle}>Inquilino</Typography>
             {lease.tenantName ? (
-              <>
+              <KVTable>
                 <KVRow label="Nombre" value={lease.tenantName} />
                 <KVRow label="DNI" value={lease.tenantDni} />
                 <KVRow label="Email" value={lease.tenantEmail} />
-              </>
+              </KVTable>
             ) : (
               <Typography variant="body2" sx={{ color: 'text.secondary', py: 1 }}>
                 Sin datos de inquilino.
@@ -195,7 +193,6 @@ export default function LeaseDetailPage() {
             )}
           </Paper>
 
-          {/* Quick links */}
           <Paper variant="outlined" sx={{ p: 3, borderColor: 'divider' }}>
             <Typography sx={sectionTitle}>Acciones</Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -231,17 +228,43 @@ export default function LeaseDetailPage() {
         </Box>
       </Box>
 
-      {/* Confirm end lease dialog */}
-      <ConfirmDialog
-        open={confirmEnd}
-        title="Finalizar contrato"
-        message={'¿Estás seguro de que querés finalizar este contrato? Esta acción no se puede deshacer.'}
-        confirmLabel="Finalizar"
-        onConfirm={handleEndLease}
-        onCancel={() => setConfirmEnd(false)}
-      />
+      <Dialog open={endDialogOpen} onClose={() => setEndDialogOpen(false)}>
+        <DialogTitle>Finalizar contrato</DialogTitle>
+        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 350, pt: '16px !important' }}>
+          <Typography variant="body2" color="text.secondary">
+            Esta acción no se puede deshacer. Completá los datos de finalización.
+          </Typography>
+          <TextField
+            label="Fecha de restitución del inmueble"
+            type="date"
+            value={restitutionDate}
+            onChange={(e) => setRestitutionDate(e.target.value)}
+            slotProps={{ inputLabel: { shrink: true } }}
+          />
+          <TextField
+            select
+            label="Destino de la unidad"
+            value={unitDestination}
+            onChange={(e) => setUnitDestination(e.target.value as 'vacant' | 'renew')}
+          >
+            <MenuItem value="">Sin definir</MenuItem>
+            <MenuItem value="vacant">Queda vacante</MenuItem>
+            <MenuItem value="renew">Se renueva contrato</MenuItem>
+          </TextField>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEndDialogOpen(false)}>Cancelar</Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleEndLease}
+            disabled={endLeaseMut.isPending}
+          >
+            {endLeaseMut.isPending ? 'Finalizando...' : 'Finalizar contrato'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-      {/* Invite tenant dialog */}
       <Dialog open={inviteOpen} onClose={() => setInviteOpen(false)}>
         <DialogTitle>Invitar inquilino</DialogTitle>
         <Box component="form" onSubmit={handleSubmit(handleInvite)}>

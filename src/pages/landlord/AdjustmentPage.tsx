@@ -19,93 +19,16 @@ import { useToast } from '../../context/ToastContext';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
 import PageHeader from '../../components/common/PageHeader';
+import { InfoRow } from '../../components/common/InfoRow';
+import { SectionTitle } from '../../components/common/SectionTitle';
+import { StatCard } from '../../components/common/StatCard';
 import { formatCurrency } from '../../utils/formatCurrency';
 import { formatDate } from '../../utils/formatDate';
-import type { Unit, TimelineEntry } from '../../types';
-
-/* ---- helpers ---- */
-
-function formatAddress(unit: Unit): string {
-  const a = unit.address;
-  let addr = `${a.street} ${a.number}`;
-  if (a.floor) addr += `, ${a.floor}.°`;
-  if (a.apartment) addr += ` ${a.apartment}`;
-  return addr;
-}
-
-const FREQUENCY_LABEL: Record<number, string> = {
-  1: 'Mensual', 2: 'Bimestral', 3: 'Trimestral',
-  4: 'Cuatrimestral', 6: 'Semestral', 12: 'Anual',
-};
-
-const INDEX_DESCRIPTIONS: Record<string, string> = {
-  ICL: 'Índice para Contratos de Locación, publicado por el BCRA. Combina inflación (CER) y salarios (RIPTE).',
-  IPC: 'Índice de Precios al Consumidor, publicado por INDEC. Mide la variación general de precios.',
-  UVA: 'Unidad de Valor Adquisitivo, publicada por el BCRA. Ajusta por inflación diaria según el CER.',
-};
-
-function formatVariation(coef: string | undefined): string {
-  if (!coef) return '-';
-  const pct = (parseFloat(coef) - 1) * 100;
-  return `${pct >= 0 ? '+' : ''}${pct.toFixed(2)}%`;
-}
-
-function formatPct(value: number): string {
-  return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
-}
-
-function formatMonthYear(isoDate: string): string {
-  const d = new Date(isoDate);
-  return d.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
-}
-
-/* ---- shared sub-components ---- */
-
-function InfoRow({ label, value, bold, color }: {
-  label: string; value: string | null | undefined; bold?: boolean; color?: string;
-}) {
-  if (!value) return null;
-  return (
-    <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.75 }}>
-      <Typography variant="body2" sx={{ color: 'text.secondary' }}>{label}</Typography>
-      <Typography variant="body2" sx={{ fontWeight: bold ? 700 : 500, color: color || 'text.primary', textAlign: 'right' }}>
-        {value}
-      </Typography>
-    </Box>
-  );
-}
-
-function SectionTitle({ icon, title }: { icon: React.ReactNode; title: string }) {
-  return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
-      {icon}
-      <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>{title}</Typography>
-    </Box>
-  );
-}
-
-function StatCard({ label, value, subtitle, color }: {
-  label: string; value: string; subtitle?: string; color?: string;
-}) {
-  return (
-    <Box sx={{
-      flex: 1, p: 1.5, bgcolor: '#fff', border: '1px solid', borderColor: 'divider',
-      borderRadius: 2, textAlign: 'center', minWidth: 0,
-    }}>
-      <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.25 }}>
-        {label}
-      </Typography>
-      <Typography variant="h6" sx={{ fontWeight: 700, color: color || 'primary.main', fontSize: '1.1rem' }}>
-        {value}
-      </Typography>
-      {subtitle && (
-        <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 0.25 }}>
-          {subtitle}
-        </Typography>
-      )}
-    </Box>
-  );
-}
+import { formatAddress } from '../../utils/formatAddress';
+import { formatVariation, formatPct, formatMonthYear } from '../../utils/formatters';
+import { getApiError } from '../../utils/getApiError';
+import { frequencyLabels, INDEX_DESCRIPTIONS } from '../../constants/labels';
+import type { TimelineEntry } from '../../types';
 
 function MiniChart({ data }: { data: Array<{ period: string; value: number }> }) {
   const theme = useTheme();
@@ -129,8 +52,6 @@ function MiniChart({ data }: { data: Array<{ period: string; value: number }> })
   );
 }
 
-/* ---- Timeline ---- */
-
 function TimelineDot({ status, isNext }: { status: string; isNext: boolean }) {
   const theme = useTheme();
   if (isNext) {
@@ -142,7 +63,7 @@ function TimelineDot({ status, isNext }: { status: string; isNext: boolean }) {
       }} />
     );
   }
-  if (status === 'confirmed') {
+  if (status === 'final') {
     return <CheckCircleOutlinedIcon sx={{ fontSize: 14, color: 'success.main', flexShrink: 0 }} />;
   }
   return (
@@ -201,9 +122,9 @@ function AdjustmentTimeline({ entries, nextDate, selectedIdx, onSelect }: {
                   {isNext && ' — Próximo'}
                 </Typography>
                 <Chip
-                  label={entry.status === 'confirmed' ? 'Confirmado' : 'Estimado'}
+                  label={entry.status === 'final' ? 'Final' : 'Estimado'}
                   size="small"
-                  color={entry.status === 'confirmed' ? 'success' : 'primary'}
+                  color={entry.status === 'final' ? 'success' : 'primary'}
                   variant="outlined"
                   sx={{ height: 20, fontSize: '0.65rem' }}
                 />
@@ -225,8 +146,6 @@ function AdjustmentTimeline({ entries, nextDate, selectedIdx, onSelect }: {
     </Box>
   );
 }
-
-/* ---- Detail Panel ---- */
 
 function AdjustmentDetail({ entry, indexName, isNext }: {
   entry: TimelineEntry; indexName: string; isNext: boolean;
@@ -308,8 +227,6 @@ function AdjustmentDetail({ entry, indexName, isNext }: {
   );
 }
 
-/* ---- Main Page ---- */
-
 export default function AdjustmentPage() {
   const { leaseId, adjustmentId } = useParams<{ leaseId: string; adjustmentId: string }>();
   const navigate = useNavigate();
@@ -324,16 +241,9 @@ export default function AdjustmentPage() {
     enabled: !!leaseId,
   });
 
-  // Pre-select the adjustment from the URL, or default to next
   const nextIdx = summary?.timeline.findIndex((t) => new Date(t.effectiveDate) > new Date()) ?? 0;
-  const urlIdx = summary?.timeline.findIndex((_, i) => {
-    // Match by index in adjustments order — adjustmentId from URL maps to the timeline
-    return false; // will be overridden below
-  });
   const defaultIdx = (() => {
     if (!summary || !adjustmentId) return nextIdx >= 0 ? nextIdx : 0;
-    // Try to match the adjustment by date or position
-    // Since timeline doesn't have IDs, find by matching the adjustment from the API
     return nextIdx >= 0 ? nextIdx : 0;
   })();
 
@@ -347,8 +257,8 @@ export default function AdjustmentPage() {
     try {
       await notifyMut.mutateAsync({ leaseId: leaseId!, adjustmentId: adjustmentId! });
       toast.success('Notificación enviada al inquilino');
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Error al enviar la notificación');
+    } catch (err: unknown) {
+      toast.error(getApiError(err, 'Error al enviar la notificación'));
     }
   };
 
@@ -356,7 +266,7 @@ export default function AdjustmentPage() {
   if (!summary) return <EmptyState message="No hay datos de ajustes disponibles." />;
 
   const { daysUntilNext, indexStats, timeline, contractProgress, lease: leaseData } = summary;
-  const freq = FREQUENCY_LABEL[leaseData.adjustmentFrequencyMonths] || `Cada ${leaseData.adjustmentFrequencyMonths} meses`;
+  const freq = frequencyLabels[leaseData.adjustmentFrequencyMonths] || `Cada ${leaseData.adjustmentFrequencyMonths} meses`;
   const theme = useTheme();
   const nextDate = timeline[nextIdx >= 0 ? nextIdx : -1]?.effectiveDate ?? null;
   const selectedEntry = timeline[activeIdx];
@@ -388,7 +298,6 @@ export default function AdjustmentPage() {
         }
       />
 
-      {/* Stats bar */}
       <Box sx={{ display: 'flex', gap: 1.5, mb: 2 }}>
         <StatCard label="Alquiler actual" value={formatCurrency(summary.currentRent)} />
         <StatCard
@@ -413,9 +322,7 @@ export default function AdjustmentPage() {
         )}
       </Box>
 
-      {/* Master-detail: Timeline left, Detail right */}
       <Box sx={{ display: 'flex', gap: 2 }}>
-        {/* LEFT: Timeline + Contract + Index */}
         <Box sx={{ width: 380, display: 'flex', flexDirection: 'column', gap: 2, flexShrink: 0 }}>
           {timeline.length > 0 && (
             <Paper variant="outlined" sx={{ p: 2, borderColor: 'divider' }}>
@@ -462,7 +369,6 @@ export default function AdjustmentPage() {
           </Paper>
         </Box>
 
-        {/* RIGHT: Detail + Index */}
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
           {selectedEntry && (
             <AdjustmentDetail

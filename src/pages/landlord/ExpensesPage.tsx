@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
-  Box, Typography, Paper, Table, TableBody, TableCell, TableContainer,
+  Box, Paper, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Button, Dialog, DialogTitle, DialogContent,
   DialogActions, TextField, MenuItem, IconButton, Pagination as MuiPagination,
 } from '@mui/material';
@@ -9,6 +9,7 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useExpenses, useCreateExpense, useDeleteExpense } from '../../hooks/useExpenses';
 import { useToast } from '../../context/ToastContext';
+import { getApiError } from '../../utils/getApiError';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
 import PageHeader from '../../components/common/PageHeader';
@@ -57,8 +58,8 @@ export default function ExpensesPage() {
       toast.success('Gasto registrado correctamente');
       setDialogOpen(false);
       reset();
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Error al registrar el gasto');
+    } catch (err: unknown) {
+      toast.error(getApiError(err, 'Error al registrar el gasto'));
     }
   };
 
@@ -66,8 +67,8 @@ export default function ExpensesPage() {
     try {
       await deleteMut.mutateAsync({ unitId: unitId!, expenseId });
       toast.success('Gasto eliminado');
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Error al eliminar el gasto');
+    } catch (err: unknown) {
+      toast.error(getApiError(err, 'Error al eliminar el gasto'));
     }
   };
 
@@ -117,7 +118,7 @@ export default function ExpensesPage() {
             </Table>
           </TableContainer>
           {totalPages > 1 && (
-            <Box display="flex" justifyContent="center" mt={2}>
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
               <MuiPagination count={totalPages} page={page} onChange={(_, p) => setPage(p)} />
             </Box>
           )}
@@ -129,7 +130,7 @@ export default function ExpensesPage() {
         <Box component="form" onSubmit={handleSubmit(onSubmit)}>
           <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
-              label="Fecha" type="datetime-local" InputLabelProps={{ shrink: true }}
+              label="Fecha" type="datetime-local" slotProps={{ inputLabel: { shrink: true } }}
               {...register('date', { required: true })}
             />
             <Controller

@@ -14,6 +14,7 @@ import {
 import { useUnit } from '../../hooks/useUnits';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
+import { getApiError } from '../../utils/getApiError';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import PageHeader from '../../components/common/PageHeader';
 import StatusChip from '../../components/common/StatusChip';
@@ -97,13 +98,9 @@ export default function LeaseConfirmPage() {
   const [error, setError] = useState('');
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
-  // Lease data form
   const { register, handleSubmit, control, reset } = useForm<LeaseFormValues>();
-
-  // Payment form
   const { register: regPay, handleSubmit: handlePaySubmit, reset: resetPay } = useForm<PaymentAccount>();
 
-  // Load PDF preview
   useEffect(() => {
     if (!lease?.document?.fileId) return;
     let revoked = false;
@@ -115,18 +112,15 @@ export default function LeaseConfirmPage() {
     return () => { revoked = true; if (pdfUrl) URL.revokeObjectURL(pdfUrl); };
   }, [lease?.document?.fileId, leaseId]);
 
-  // Pre-fill forms when lease loads
   useEffect(() => {
     if (!lease) return;
 
-    // Build extracted values map
     const ext = new Map<string, string>();
     lease.extractedFields.forEach((f) => {
       const val = f.correctedValue ?? f.value;
       if (val != null) ext.set(f.fieldName, String(val));
     });
 
-    // For lease form: use extracted values first, then lease data, then empty
     const isPlaceholder = lease.initialRent === '0' || lease.initialRent === '0.00';
     reset({
       tenantName: ext.get('tenantName') || lease.tenantName || '',
@@ -140,7 +134,6 @@ export default function LeaseConfirmPage() {
       adjustmentFrequencyMonths: Number(ext.get('adjustmentFrequencyMonths')) || lease.adjustmentFrequencyMonths || 6,
     });
 
-    // Payment form
     if (lease.paymentAccount) {
       resetPay({
         holderName: lease.paymentAccount.holderName || '',
@@ -193,8 +186,8 @@ export default function LeaseConfirmPage() {
       await activateMut.mutateAsync(leaseId!);
       toast.success('Contrato registrado correctamente');
       navigate(`/leases/${leaseId}/invite`);
-    } catch (err: any) {
-      const msg = err.response?.data?.message || 'Error al registrar el contrato';
+    } catch (err: unknown) {
+      const msg = getApiError(err, 'Error al registrar el contrato');
       setError(msg);
       toast.error(msg);
     }
@@ -204,8 +197,8 @@ export default function LeaseConfirmPage() {
     try {
       await paymentAccountMut.mutateAsync({ leaseId: leaseId!, data });
       toast.success('Datos de cobro guardados');
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Error al guardar datos de cobro');
+    } catch (err: unknown) {
+      toast.error(getApiError(err, 'Error al guardar datos de cobro'));
     }
   };
 
@@ -243,7 +236,6 @@ export default function LeaseConfirmPage() {
         }
       />
 
-      {/* Stepper */}
       <Stepper activeStep={1} sx={{ mb: 4, mt: 2 }}>
         {steps.map((label) => (
           <Step key={label}>
@@ -254,7 +246,6 @@ export default function LeaseConfirmPage() {
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-      {/* Extracted fields table (when backend extraction is available) */}
       {hasExtracted && (
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1.2fr' }, gap: 3, mb: 3, alignItems: 'start' }}>
           <Paper variant="outlined" sx={{ p: 3, borderColor: 'divider' }}>
@@ -341,7 +332,6 @@ export default function LeaseConfirmPage() {
         </Box>
       )}
 
-      {/* Editable lease form */}
       {!hasExtracted && (
         <Paper variant="outlined" sx={{ p: 3, borderColor: 'divider', mb: 3 }}>
           <Typography sx={{ fontWeight: 700, fontSize: '1.05rem', mb: 1 }}>Datos del contrato</Typography>
@@ -378,7 +368,7 @@ export default function LeaseConfirmPage() {
                 fullWidth
                 label="Inicio del plazo"
                 type="date"
-                InputLabelProps={{ shrink: true }}
+                slotProps={{ inputLabel: { shrink: true } }}
                 {...register('startDate', { required: true })}
               />
             </Grid>
@@ -387,7 +377,7 @@ export default function LeaseConfirmPage() {
                 fullWidth
                 label="Fin del plazo"
                 type="date"
-                InputLabelProps={{ shrink: true }}
+                slotProps={{ inputLabel: { shrink: true } }}
                 {...register('endDate', { required: true })}
               />
             </Grid>
@@ -433,7 +423,6 @@ export default function LeaseConfirmPage() {
         </Paper>
       )}
 
-      {/* Payment account */}
       <Paper variant="outlined" sx={{ p: 3, borderColor: 'divider' }}>
         <Typography sx={{ fontWeight: 700, fontSize: '1.05rem', mb: 0.5 }}>Datos para recibir el pago</Typography>
         <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3 }}>

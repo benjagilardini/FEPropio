@@ -10,6 +10,7 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { useLease, useInviteTenant } from '../../hooks/useLeases';
 import { useUnit } from '../../hooks/useUnits';
 import { useToast } from '../../context/ToastContext';
+import { getApiError } from '../../utils/getApiError';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import PageHeader from '../../components/common/PageHeader';
 
@@ -62,8 +63,8 @@ export default function LeaseInvitePage() {
       toast.success('Invitación enviada correctamente');
       setSent(true);
       setTimeout(() => navigate(`/leases/${leaseId}`), 1500);
-    } catch (err: any) {
-      const msg = err.response?.data?.message || 'Error al enviar la invitación';
+    } catch (err: unknown) {
+      const msg = getApiError(err, 'Error al enviar la invitación');
       setError(msg);
       toast.error(msg);
     }
@@ -81,7 +82,6 @@ export default function LeaseInvitePage() {
         subtitle="Contrato registrado. Invitá al locatario para que acceda a la información de la unidad."
       />
 
-      {/* Stepper */}
       <Stepper activeStep={2} sx={{ mb: 4 }}>
         {steps.map((label) => (
           <Step key={label}>
@@ -94,7 +94,6 @@ export default function LeaseInvitePage() {
       {sent && <Alert severity="success" sx={{ mb: 2 }}>Invitación enviada correctamente.</Alert>}
 
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3, alignItems: 'start' }}>
-        {/* Left: Tenant data */}
         <Paper variant="outlined" sx={{ p: 3, borderColor: 'divider' }}>
           <Typography sx={{ fontWeight: 700, fontSize: '1.05rem', mb: 1 }}>
             Datos del locatario
@@ -136,7 +135,6 @@ export default function LeaseInvitePage() {
             </Grid>
           </Grid>
 
-          {/* Info alert */}
           <Box
             sx={{
               display: 'flex',
@@ -158,7 +156,6 @@ export default function LeaseInvitePage() {
           </Box>
         </Paper>
 
-        {/* Right: What they can see */}
         <Paper variant="outlined" sx={{ p: 3, borderColor: 'divider' }}>
           <Typography sx={{ fontWeight: 700, fontSize: '1.05rem', mb: 2 }}>
             Qué va a poder ver
@@ -174,7 +171,6 @@ export default function LeaseInvitePage() {
         </Paper>
       </Box>
 
-      {/* Buttons */}
       <Box sx={{ display: 'flex', gap: 2, mt: 3, justifyContent: 'flex-end' }}>
         <Button
           onClick={() => navigate(`/leases/${leaseId}`)}

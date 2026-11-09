@@ -5,9 +5,6 @@ import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   alpha, useTheme,
 } from '@mui/material';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutlined';
-import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutlineOutlined';
 import CheckIcon from '@mui/icons-material/Check';
 import FlagOutlinedIcon from '@mui/icons-material/FlagOutlined';
 import DownloadIcon from '@mui/icons-material/Download';
@@ -20,72 +17,13 @@ import { useToast } from '../../context/ToastContext';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
 import PageHeader from '../../components/common/PageHeader';
+import { PaymentStatusBadge } from '../../components/common/PaymentStatusBadge';
 import { formatCurrency } from '../../utils/formatCurrency';
-import type { Unit, PaymentReceipt } from '../../types';
-
-/* ---- helpers ---- */
-
-function fmtAddress(unit: Unit): string {
-  const a = unit.address;
-  let s = `${a.street} ${a.number}`;
-  if (a.floor) s += `, ${a.floor}.°`;
-  if (a.apartment) s += ` ${a.apartment}`;
-  return s;
-}
-
-function fmtMonth(period: string): string {
-  const [y, m] = period.split('-');
-  const d = new Date(+y, +m - 1, 1);
-  const name = d.toLocaleDateString('es-AR', { month: 'long' });
-  return `${name.charAt(0).toUpperCase() + name.slice(1)} ${y}`;
-}
-
-function fmtShortMonth(period: string): string {
-  const [y, m] = period.split('-');
-  const d = new Date(+y, +m - 1, 1);
-  const name = d.toLocaleDateString('es-AR', { month: 'short' });
-  return `${name.charAt(0).toUpperCase() + name.slice(1)} ${y}`;
-}
-
-function fmtDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-}
-
-function generateMonths(start: string, end: string): string[] {
-  const months: string[] = [];
-  let cur = new Date(new Date(start).getFullYear(), new Date(start).getMonth(), 1);
-  const last = new Date(new Date(end).getFullYear(), new Date(end).getMonth(), 1);
-  while (cur <= last) {
-    months.push(`${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, '0')}`);
-    cur.setMonth(cur.getMonth() + 1);
-  }
-  return months;
-}
-
-/* ---- status badge ---- */
-
-const STATUS_CFG: Record<string, { label: string; color: 'success' | 'info' | 'error'; icon: React.ReactElement }> = {
-  confirmed: { label: 'Confirmado', color: 'success', icon: <CheckCircleOutlineIcon sx={{ fontSize: 15 }} /> },
-  submitted: { label: 'Por revisar', color: 'info', icon: <HourglassEmptyIcon sx={{ fontSize: 15 }} /> },
-  flagged:   { label: 'Observado',  color: 'error', icon: <ErrorOutlineIcon sx={{ fontSize: 15 }} /> },
-};
-
-function StatusBadge({ status }: { status: string }) {
-  const cfg = STATUS_CFG[status];
-  if (!cfg) return <Typography variant="caption" color="text.disabled">Sin pago</Typography>;
-  return (
-    <Chip
-      icon={cfg.icon}
-      label={cfg.label}
-      size="small"
-      color={cfg.color}
-      variant="outlined"
-      sx={{ fontWeight: 500, fontSize: '0.75rem', height: 24 }}
-    />
-  );
-}
-
-/* ---- page ---- */
+import { formatAddress } from '../../utils/formatAddress';
+import { formatLongMonth, formatShortMonth, generateMonths } from '../../utils/formatters';
+import { formatDate } from '../../utils/formatDate';
+import { getApiError } from '../../utils/getApiError';
+import type { PaymentReceipt } from '../../types';
 
 export default function PaymentsOverviewPage() {
   const { data: unitsData, isLoading: unitsLoading } = useUnits(1);
@@ -156,8 +94,8 @@ export default function PaymentsOverviewPage() {
     try {
       await confirmMut.mutateAsync({ leaseId, paymentId });
       toast.success('Pago confirmado');
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Error al confirmar');
+    } catch (err: unknown) {
+      toast.error(getApiError(err, 'Error al confirmar'));
     }
   };
 
@@ -168,8 +106,8 @@ export default function PaymentsOverviewPage() {
       toast.success('Comprobante observado');
       setFlagDialog(null);
       setReviewNote('');
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Error al observar');
+    } catch (err: unknown) {
+      toast.error(getApiError(err, 'Error al observar'));
     }
   };
 
@@ -198,7 +136,6 @@ export default function PaymentsOverviewPage() {
         />
       ) : (
         <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
-          {/* Controls */}
           <Box sx={{ flexShrink: 0, display: 'flex', alignItems: 'flex-end', gap: 2, mb: 2, flexWrap: 'wrap' }}>
             <TextField
               select
@@ -210,7 +147,7 @@ export default function PaymentsOverviewPage() {
             >
               {occupiedUnits.map((u) => (
                 <MenuItem key={u.id} value={u.id}>
-                  {fmtAddress(u)}{u.tenant?.name ? ` — ${u.tenant.name}` : ''}
+                  {formatAddress(u)}{u.tenant?.name ? ` — ${u.tenant.name}` : ''}
                 </MenuItem>
               ))}
             </TextField>
@@ -231,7 +168,6 @@ export default function PaymentsOverviewPage() {
             )}
           </Box>
 
-          {/* Body */}
           {!selectedUnitId ? (
             <EmptyState message="Seleccioná una unidad." />
           ) : loading ? (
@@ -273,10 +209,9 @@ export default function PaymentsOverviewPage() {
                           ...(isPast && { opacity: 0.4 }),
                         }}
                       >
-                        {/* Period */}
                         <TableCell>
                           <Typography variant="body2" sx={{ fontWeight: isCur ? 700 : 500 }}>
-                            {fmtShortMonth(period)}
+                            {formatShortMonth(period)}
                           </Typography>
                           {isCur && (
                             <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 600, fontSize: '0.65rem' }}>
@@ -285,7 +220,6 @@ export default function PaymentsOverviewPage() {
                           )}
                         </TableCell>
 
-                        {/* Paid amount */}
                         <TableCell align="right">
                           {p ? (
                             <Typography variant="body2" sx={{ fontWeight: 600, color: mismatch ? 'error.main' : 'text.primary' }}>
@@ -296,14 +230,12 @@ export default function PaymentsOverviewPage() {
                           )}
                         </TableCell>
 
-                        {/* Expected amount */}
                         <TableCell align="right">
                           <Typography variant="body2" color="text.secondary">
                             {p?.expectedAmount ? formatCurrency(p.expectedAmount) : selectedUnit?.currentRent ? formatCurrency(selectedUnit.currentRent) : '—'}
                           </Typography>
                         </TableCell>
 
-                        {/* Message */}
                         <TableCell>
                           {p?.message ? (
                             <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', maxWidth: 220 }} noWrap>
@@ -314,12 +246,10 @@ export default function PaymentsOverviewPage() {
                           )}
                         </TableCell>
 
-                        {/* Status */}
                         <TableCell align="center">
-                          <StatusBadge status={p?.status || 'pending'} />
+                          <PaymentStatusBadge status={p?.status || 'pending'} />
                         </TableCell>
 
-                        {/* Actions */}
                         <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
                           {p?.status === 'submitted' && (
                             <>
@@ -362,13 +292,12 @@ export default function PaymentsOverviewPage() {
         </Box>
       )}
 
-      {/* ---- Flag dialog ---- */}
       <Dialog open={!!flagDialog} onClose={() => setFlagDialog(null)} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ fontWeight: 700 }}>
           Observar comprobante
           {flagDialog && (
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
-              {fmtMonth(flagDialog.period)} — {formatCurrency(flagDialog.amount)}
+              {formatLongMonth(flagDialog.period)} — {formatCurrency(flagDialog.amount)}
             </Typography>
           )}
         </DialogTitle>
@@ -392,20 +321,19 @@ export default function PaymentsOverviewPage() {
         </DialogActions>
       </Dialog>
 
-      {/* ---- Detail dialog ---- */}
       <Dialog open={!!detailPayment} onClose={() => setDetailPayment(null)} maxWidth="xs" fullWidth>
         {detailPayment && (
           <>
             <DialogTitle sx={{ fontWeight: 700, pb: 0.5 }}>
-              {fmtMonth(detailPayment.period)}
-              <StatusBadge status={detailPayment.status} />
+              {formatLongMonth(detailPayment.period)}
+              <PaymentStatusBadge status={detailPayment.status} />
             </DialogTitle>
             <DialogContent sx={{ pt: 2 }}>
               <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 2 }}>
                 <DetailField label="Importe pagado" value={formatCurrency(detailPayment.amount)} highlight={detailPayment.expectedAmount ? detailPayment.amount !== detailPayment.expectedAmount : false} />
                 <DetailField label="Importe esperado" value={detailPayment.expectedAmount ? formatCurrency(detailPayment.expectedAmount) : '—'} />
-                <DetailField label="Fecha de pago" value={fmtDate(detailPayment.paymentDate)} />
-                {detailPayment.reviewedAt && <DetailField label="Revisado" value={fmtDate(detailPayment.reviewedAt)} />}
+                <DetailField label="Fecha de pago" value={formatDate(detailPayment.paymentDate)} />
+                {detailPayment.reviewedAt && <DetailField label="Revisado" value={formatDate(detailPayment.reviewedAt)} />}
               </Box>
 
               {detailPayment.message && (
@@ -456,8 +384,6 @@ export default function PaymentsOverviewPage() {
     </Box>
   );
 }
-
-/* ---- small components ---- */
 
 function TabLabel({ text, count, color }: { text: string; count: number; color: 'primary' | 'error' }) {
   return (

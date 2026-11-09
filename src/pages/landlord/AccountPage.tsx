@@ -12,6 +12,7 @@ import BadgeOutlinedIcon from '@mui/icons-material/BadgeOutlined';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api/axiosInstance';
+import { getApiError } from '../../utils/getApiError';
 import PageHeader from '../../components/common/PageHeader';
 
 interface ProfileData {
@@ -63,8 +64,8 @@ export default function AccountPage() {
       setProfileMsg('');
       await api.put('/users/me', { firstName: data.firstName, lastName: data.lastName, phone: data.phone });
       setProfileMsg('Perfil actualizado correctamente.');
-    } catch (err: any) {
-      setProfileError(err.response?.data?.message || 'Error al actualizar');
+    } catch (err: unknown) {
+      setProfileError(getApiError(err, 'Error al actualizar'));
     }
   };
 
@@ -86,8 +87,8 @@ export default function AccountPage() {
       });
       setPasswordMsg('Contraseña actualizada correctamente.');
       passwordForm.reset();
-    } catch (err: any) {
-      setPasswordError(err.response?.data?.message || 'Error al cambiar contraseña');
+    } catch (err: unknown) {
+      setPasswordError(getApiError(err, 'Error al cambiar contraseña'));
     }
   };
 
@@ -98,7 +99,6 @@ export default function AccountPage() {
     <Box>
       <PageHeader title="Mi cuenta" />
 
-      {/* Profile header card */}
       <Paper
         variant="outlined"
         sx={{
@@ -135,9 +135,7 @@ export default function AccountPage() {
         <Chip label={roleLabel} color="primary" variant="outlined" size="small" />
       </Paper>
 
-      {/* Two columns */}
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3, alignItems: 'start' }}>
-        {/* Personal data */}
         <Paper variant="outlined" sx={{ p: 3, borderColor: 'divider' }}>
           <SectionTitle
             icon={<PersonOutlineIcon sx={{ fontSize: 22, color: 'primary.main' }} />}
@@ -201,7 +199,6 @@ export default function AccountPage() {
           </Box>
         </Paper>
 
-        {/* Security */}
         <Paper variant="outlined" sx={{ p: 3, borderColor: 'divider' }}>
           <SectionTitle
             icon={<LockOutlinedIcon sx={{ fontSize: 22, color: 'primary.main' }} />}
