@@ -26,8 +26,8 @@ export const leaseApi = {
   activate: (leaseId: string) =>
     api.post<{ data: Lease }>(`/leases/${leaseId}/activate`).then((r) => r.data.data),
 
-  endLease: (leaseId: string) =>
-    api.post<{ data: Lease }>(`/leases/${leaseId}/end`).then((r) => r.data.data),
+  endLease: (leaseId: string, data?: { restitutionDate?: string; unitDestination?: 'vacant' | 'renew' }) =>
+    api.post<{ data: Lease }>(`/leases/${leaseId}/end`, data ?? {}).then((r) => r.data.data),
 
   confirmField: (leaseId: string, fieldIndex: number) =>
     api.put(`/leases/${leaseId}/fields/${fieldIndex}/confirm`).then((r) => r.data.data),

@@ -178,7 +178,6 @@ export default function Layout() {
         </Toolbar>
       </AppBar>
 
-      {/* Notifications popover */}
       <Popover
         open={!!notifAnchor}
         anchorEl={notifAnchor}
@@ -187,7 +186,6 @@ export default function Layout() {
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
         slotProps={{ paper: { sx: { width: 380, maxHeight: 460, display: 'flex', flexDirection: 'column', mt: 0.5, borderRadius: 2 } } }}
       >
-        {/* Header */}
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2, py: 1.5, borderBottom: '1px solid', borderColor: 'divider', flexShrink: 0 }}>
           <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Notificaciones</Typography>
           {(unreadCount ?? 0) > 0 && (
@@ -203,7 +201,6 @@ export default function Layout() {
           )}
         </Box>
 
-        {/* List */}
         <Box sx={{ flex: 1, overflow: 'auto' }}>
           {notifLoading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>

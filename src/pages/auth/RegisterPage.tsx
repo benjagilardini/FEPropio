@@ -17,6 +17,7 @@ import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '../../context/AuthContext';
+import { getApiError } from '../../utils/getApiError';
 import type { RegisterInput } from '../../types';
 import AuthLayout from './AuthLayout';
 
@@ -37,8 +38,8 @@ export default function RegisterPage() {
       setError('');
       await registerUser(data);
       navigate('/');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al registrarse');
+    } catch (err: unknown) {
+      setError(getApiError(err, 'Error al registrarse'));
     }
   };
 
@@ -138,7 +139,7 @@ export default function RegisterPage() {
       <Box sx={{ mt: 3, textAlign: 'center' }}>
         <Typography variant="body2" color="text.secondary">
           ¿Ya tenés cuenta?{' '}
-          <Link component={RouterLink} to="/login" underline="hover" fontWeight={600}>
+          <Link component={RouterLink} to="/login" underline="hover" sx={{ fontWeight: 600 }}>
             Ingresá
           </Link>
         </Typography>

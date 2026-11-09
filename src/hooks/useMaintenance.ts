@@ -21,8 +21,8 @@ export function useMaintenanceRequest(leaseId: string, requestId: string) {
 export function useCreateMaintenanceRequest() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ leaseId, data }: { leaseId: string; data: MaintenanceInput }) =>
-      maintenanceApi.create(leaseId, data),
+    mutationFn: ({ leaseId, data, photos }: { leaseId: string; data: MaintenanceInput; photos?: File[] }) =>
+      maintenanceApi.create(leaseId, data, photos),
     onSuccess: (_, { leaseId }) => qc.invalidateQueries({ queryKey: ['maintenance', leaseId] }),
   });
 }

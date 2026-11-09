@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import {
   Box, Typography, Paper, Divider, Button, Dialog, DialogTitle,
   DialogContent, DialogActions, TextField, MenuItem, Alert, Collapse,
@@ -7,6 +7,8 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import BuildIcon from '@mui/icons-material/Build';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
+import CloseIcon from '@mui/icons-material/Close';
 import PlumbingIcon from '@mui/icons-material/Plumbing';
 import ElectricalServicesIcon from '@mui/icons-material/ElectricalServices';
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
@@ -15,12 +17,14 @@ import KitchenIcon from '@mui/icons-material/Kitchen';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import { useTenantLeases } from '../../hooks/useLeases';
 import { useMaintenanceRequests, useCreateMaintenanceRequest } from '../../hooks/useMaintenance';
+import { maintenanceApi } from '../../api/maintenanceApi';
 import { useToast } from '../../context/ToastContext';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
 import StatusChip from '../../components/common/StatusChip';
 import PageHeader from '../../components/common/PageHeader';
 import { formatDateTime } from '../../utils/formatDate';
+import { getApiError } from '../../utils/getApiError';
 import { useForm, Controller } from 'react-hook-form';
 import type { MaintenanceInput } from '../../types';
 
@@ -45,6 +49,8 @@ export default function TenantMaintenancePage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [error, setError] = useState('');
+  const [photos, setPhotos] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { register, handleSubmit, control, reset } = useForm<MaintenanceInput>({
     defaultValues: { category: 'other' },
   });
@@ -58,15 +64,27 @@ export default function TenantMaintenancePage() {
   const onSubmit = async (formData: MaintenanceInput) => {
     try {
       setError('');
-      await createMut.mutateAsync({ leaseId: activeLease.id, data: formData });
+      await createMut.mutateAsync({ leaseId: activeLease.id, data: formData, photos: photos.length ? photos : undefined });
       toast.success('Reclamo enviado correctamente');
       setDialogOpen(false);
       reset();
-    } catch (err: any) {
-      const msg = err.response?.data?.message || 'Error al crear reclamo';
+      setPhotos([]);
+    } catch (err: unknown) {
+      const msg = getApiError(err, 'Error al crear reclamo');
       setError(msg);
       toast.error(msg);
     }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    setPhotos((prev) => [...prev, ...files].slice(0, 5));
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const buildPhotoUrl = (leaseId: string, requestId: string, index: number) => {
+    const base = maintenanceApi.getPhotoUrl(leaseId, requestId, index);
+    return `${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}${base}`;
   };
 
   return (
@@ -134,6 +152,25 @@ export default function TenantMaintenancePage() {
                     <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>Descripción</Typography>
                     <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2, whiteSpace: 'pre-wrap' }}>{r.description}</Typography>
 
+                    {r.photos.length > 0 && (
+                      <>
+                        <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>Fotos</Typography>
+                        <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+                          {r.photos.map((p) => (
+                            <Box
+                              key={p.index}
+                              component="img"
+                              crossOrigin="use-credentials"
+                              src={buildPhotoUrl(activeLease.id, r.id, p.index)}
+                              alt={p.fileName}
+                              sx={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 1.5, cursor: 'pointer', border: '1px solid', borderColor: 'divider' }}
+                              onClick={() => window.open(buildPhotoUrl(activeLease.id, r.id, p.index), '_blank')}
+                            />
+                          ))}
+                        </Box>
+                      </>
+                    )}
+
                     {r.statusHistory.length > 0 && (
                       <>
                         <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>Historial</Typography>
@@ -171,7 +208,6 @@ export default function TenantMaintenancePage() {
         </Box>
       )}
 
-      {/* New request dialog */}
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ fontWeight: 700 }}>Nuevo reclamo</DialogTitle>
         <Box component="form" onSubmit={handleSubmit(onSubmit)}>
@@ -198,6 +234,38 @@ export default function TenantMaintenancePage() {
               helperText="Mínimo 10 caracteres"
               size="small"
             />
+            <Box>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                multiple
+                hidden
+                onChange={handleFileChange}
+              />
+              <Button
+                variant="outlined"
+                startIcon={<PhotoCameraIcon />}
+                onClick={() => fileInputRef.current?.click()}
+                disabled={photos.length >= 5}
+                size="small"
+              >
+                Adjuntar fotos ({photos.length}/5)
+              </Button>
+              {photos.length > 0 && (
+                <Box sx={{ display: 'flex', gap: 1, mt: 1, flexWrap: 'wrap' }}>
+                  {photos.map((f, i) => (
+                    <Chip
+                      key={i}
+                      label={f.name.length > 20 ? `${f.name.slice(0, 17)}...` : f.name}
+                      size="small"
+                      onDelete={() => setPhotos((prev) => prev.filter((_, idx) => idx !== i))}
+                      deleteIcon={<CloseIcon />}
+                    />
+                  ))}
+                </Box>
+              )}
+            </Box>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2.5 }}>
             <Button onClick={() => setDialogOpen(false)}>Cancelar</Button>

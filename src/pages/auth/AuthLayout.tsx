@@ -17,7 +17,6 @@ interface AuthLayoutProps {
 export default function AuthLayout({ children }: AuthLayoutProps) {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'row', minHeight: '100vh' }}>
-      {/* LEFT PANEL */}
       <Box
         sx={{
           display: { xs: 'none', md: 'flex' },
@@ -50,7 +49,6 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
         </Box>
       </Box>
 
-      {/* RIGHT PANEL */}
       <Box
         sx={{
           width: { xs: '100%', md: '60%' },

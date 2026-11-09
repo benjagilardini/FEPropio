@@ -1,61 +1,22 @@
 import { useState, useEffect } from 'react';
 import {
-  Box, Typography, Paper, Button, Divider, Chip, IconButton, Tooltip,
+  Box, Typography, Paper, Button, Divider, Chip,
 } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { useTenantLeases, useLease } from '../../hooks/useLeases';
 import { leaseApi } from '../../api/leaseApi';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
 import StatusChip from '../../components/common/StatusChip';
 import PageHeader from '../../components/common/PageHeader';
+import { InfoRow } from '../../components/common/InfoRow';
+import { CopyField } from '../../components/common/CopyField';
 import { formatCurrency } from '../../utils/formatCurrency';
 import { formatDate } from '../../utils/formatDate';
-
-function InfoRow({ label, value }: { label: string; value: string | null | undefined }) {
-  if (!value) return null;
-  return (
-    <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.75 }}>
-      <Typography variant="body2" sx={{ color: 'text.secondary' }}>{label}</Typography>
-      <Typography variant="body2" sx={{ fontWeight: 500, textAlign: 'right' }}>{value}</Typography>
-    </Box>
-  );
-}
-
-function CopyableField({ label, value }: { label: string; value: string }) {
-  const [copied, setCopied] = useState(false);
-  const handleCopy = () => {
-    navigator.clipboard.writeText(value);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  };
-  return (
-    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 0.75 }}>
-      <Typography variant="body2" sx={{ color: 'text.secondary' }}>{label}</Typography>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-        <Typography variant="body2" sx={{ fontWeight: 500, fontFamily: 'monospace', letterSpacing: '0.03em' }}>{value}</Typography>
-        <Tooltip title={copied ? 'Copiado' : 'Copiar'}>
-          <IconButton size="small" onClick={handleCopy} sx={{ color: 'text.secondary' }}>
-            <ContentCopyIcon sx={{ fontSize: 16 }} />
-          </IconButton>
-        </Tooltip>
-      </Box>
-    </Box>
-  );
-}
-
-const frequencyLabel: Record<number, string> = {
-  1: 'mensual',
-  2: 'bimestral',
-  3: 'trimestral',
-  4: 'cuatrimestral',
-  6: 'semestral',
-  12: 'anual',
-};
+import { frequencyLabels } from '../../constants/labels';
 
 export default function LeasePage() {
   const { data: leases, isLoading: leasesLoading } = useTenantLeases();
@@ -107,7 +68,6 @@ export default function LeasePage() {
       />
 
       <Box sx={{ display: 'flex', gap: 2, flex: 1, minHeight: 0 }}>
-        {/* Left column — Document preview */}
         <Paper variant="outlined" sx={{ borderColor: 'divider', overflow: 'hidden', flex: 7, minWidth: 0 }}>
           {lease.document ? (
             <Box sx={{ bgcolor: '#f5f5f5', height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -142,9 +102,7 @@ export default function LeasePage() {
           )}
         </Paper>
 
-        {/* Right column — Contract data cards */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, flex: 3, minWidth: 0, overflow: 'auto' }}>
-          {/* Duration card */}
           <Paper variant="outlined" sx={{ p: 1.5, borderColor: 'divider', flexShrink: 0 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.75 }}>
               <CalendarTodayIcon sx={{ fontSize: 20, color: 'primary.main' }} />
@@ -167,7 +125,6 @@ export default function LeasePage() {
             </Box>
           </Paper>
 
-          {/* Financial card */}
           <Paper variant="outlined" sx={{ p: 1.5, borderColor: 'divider', flexShrink: 0 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.75 }}>
               <AttachMoneyIcon sx={{ fontSize: 20, color: 'primary.main' }} />
@@ -186,13 +143,12 @@ export default function LeasePage() {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Chip label={lease.adjustmentIndex} size="small" color="primary" variant="outlined" />
                 <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                  {frequencyLabel[lease.adjustmentFrequencyMonths] || `cada ${lease.adjustmentFrequencyMonths} meses`}
+                  {(frequencyLabels[lease.adjustmentFrequencyMonths] || `cada ${lease.adjustmentFrequencyMonths} meses`).toLowerCase()}
                 </Typography>
               </Box>
             </Box>
           </Paper>
 
-          {/* Payment account card */}
           {lease.paymentAccount && (
             <Paper variant="outlined" sx={{ p: 1.5, borderColor: 'divider', flexShrink: 0 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.75 }}>
@@ -203,11 +159,11 @@ export default function LeasePage() {
               <Divider />
               <InfoRow label="Banco" value={lease.paymentAccount.bank} />
               <Divider />
-              <CopyableField label="CBU/CVU" value={lease.paymentAccount.cbuOrCvu} />
+              <CopyField label="CBU/CVU" value={lease.paymentAccount.cbuOrCvu} />
               {lease.paymentAccount.alias && (
                 <>
                   <Divider />
-                  <CopyableField label="Alias" value={lease.paymentAccount.alias} />
+                  <CopyField label="Alias" value={lease.paymentAccount.alias} />
                 </>
               )}
             </Paper>

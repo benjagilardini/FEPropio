@@ -4,12 +4,10 @@ import Layout from '../components/common/Layout';
 import ProtectedRoute from '../components/common/ProtectedRoute';
 import RolePage from '../components/common/RolePage';
 
-// Landlord pages
 const AdjustmentsOverviewPage = lazy(() => import('../pages/landlord/AdjustmentsOverviewPage'));
 const PaymentsOverviewPage = lazy(() => import('../pages/landlord/PaymentsOverviewPage'));
 const MaintenanceOverviewPage = lazy(() => import('../pages/landlord/MaintenanceOverviewPage'));
 
-// Tenant pages
 const TenantAdjustmentsPage = lazy(() => import('../pages/tenant/AdjustmentsPage'));
 const TenantPaymentsPage = lazy(() => import('../pages/tenant/PaymentsPage'));
 const TenantMaintenancePage = lazy(() => import('../pages/tenant/MaintenancePage'));

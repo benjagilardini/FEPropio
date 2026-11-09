@@ -1,4 +1,4 @@
-import { Box, Typography, Paper, Button } from '@mui/material';
+import { Box, Typography, Paper } from '@mui/material';
 import InboxIcon from '@mui/icons-material/Inbox';
 import type { SvgIconComponent } from '@mui/icons-material';
 import type { ReactNode } from 'react';

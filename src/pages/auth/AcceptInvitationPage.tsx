@@ -4,6 +4,7 @@ import { Box, Container, Paper, TextField, Button, Typography, Alert } from '@mu
 import HowToRegIcon from '@mui/icons-material/HowToReg';
 import { useForm } from 'react-hook-form';
 import { api } from '../../api/axiosInstance';
+import { getApiError } from '../../utils/getApiError';
 
 interface FormData {
   password: string;
@@ -23,8 +24,8 @@ export default function AcceptInvitationPage() {
       await api.post('/auth/accept-invitation', { token, password: data.password });
       setSuccess(true);
       setTimeout(() => navigate('/login'), 2000);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al aceptar la invitación');
+    } catch (err: unknown) {
+      setError(getApiError(err, 'Error al aceptar la invitación'));
     }
   };
 

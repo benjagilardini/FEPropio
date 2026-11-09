@@ -5,6 +5,7 @@ import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { useForm } from 'react-hook-form';
 import { authApi } from '../../api/authApi';
+import { getApiError } from '../../utils/getApiError';
 import AuthLayout from './AuthLayout';
 
 interface FormData {
@@ -25,8 +26,8 @@ export default function ResetPasswordPage() {
       setError('');
       await authApi.resetPassword(data.email, token, data.newPassword);
       navigate('/login');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al restablecer la contraseña');
+    } catch (err: unknown) {
+      setError(getApiError(err, 'Error al restablecer la contraseña'));
     }
   };
 

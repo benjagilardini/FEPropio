@@ -5,6 +5,7 @@ import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '../../context/AuthContext';
+import { getApiError } from '../../utils/getApiError';
 import type { LoginInput } from '../../types';
 import AuthLayout from './AuthLayout';
 
@@ -20,8 +21,8 @@ export default function LoginPage() {
       setError('');
       await login(data.email, data.password);
       navigate('/');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al iniciar sesión');
+    } catch (err: unknown) {
+      setError(getApiError(err, 'Error al iniciar sesión'));
     }
   };
 
@@ -75,7 +76,7 @@ export default function LoginPage() {
         </Link>
         <Typography variant="body2" color="text.secondary">
           ¿No tenés cuenta?{' '}
-          <Link component={RouterLink} to="/register" underline="hover" fontWeight={600}>
+          <Link component={RouterLink} to="/register" underline="hover" sx={{ fontWeight: 600 }}>
             Registrate
           </Link>
         </Typography>

@@ -2,13 +2,10 @@ import { useState, useMemo, useRef } from 'react';
 import {
   Box, Typography, Paper, Button, Dialog, DialogTitle,
   DialogContent, DialogActions, TextField, Alert, IconButton, Tooltip,
-  Divider, Chip, alpha, useTheme,
+  Divider, alpha, useTheme,
 } from '@mui/material';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
-import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutlineOutlined';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DownloadIcon from '@mui/icons-material/Download';
@@ -20,38 +17,10 @@ import LoadingSpinner from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
 import PageHeader from '../../components/common/PageHeader';
 import { formatCurrency } from '../../utils/formatCurrency';
+import { generateMonths, formatShortMonth, formatLongMonth } from '../../utils/formatters';
+import { PaymentStatusBadge } from '../../components/common/PaymentStatusBadge';
+import { getApiError } from '../../utils/getApiError';
 import type { PaymentReceipt } from '../../types';
-
-/* ---- helpers ---- */
-
-function generateMonths(startDate: string, endDate: string): string[] {
-  const months: string[] = [];
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-  let cur = new Date(start.getFullYear(), start.getMonth(), 1);
-  const last = new Date(end.getFullYear(), end.getMonth(), 1);
-  while (cur <= last) {
-    months.push(`${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, '0')}`);
-    cur.setMonth(cur.getMonth() + 1);
-  }
-  return months;
-}
-
-function fmtMonth(period: string): string {
-  const [y, m] = period.split('-');
-  const d = new Date(+y, +m - 1, 1);
-  const name = d.toLocaleDateString('es-AR', { month: 'short' });
-  return `${name.charAt(0).toUpperCase() + name.slice(1)} ${y}`;
-}
-
-function fmtMonthLong(period: string): string {
-  const [y, m] = period.split('-');
-  const d = new Date(+y, +m - 1, 1);
-  const name = d.toLocaleDateString('es-AR', { month: 'long' });
-  return `${name.charAt(0).toUpperCase() + name.slice(1)} ${y}`;
-}
-
-/* ---- sub-components ---- */
 
 function CopyField({ label, value }: { label: string; value: string }) {
   const [copied, setCopied] = useState(false);
@@ -75,19 +44,6 @@ function InfoField({ label, value }: { label: string; value: string }) {
     </Box>
   );
 }
-
-function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, { label: string; color: 'success' | 'primary' | 'error'; icon: React.ReactNode }> = {
-    confirmed: { label: 'Aprobado', color: 'success', icon: <CheckCircleOutlinedIcon sx={{ fontSize: 14 }} /> },
-    submitted: { label: 'En revisión', color: 'primary', icon: <HourglassEmptyIcon sx={{ fontSize: 14 }} /> },
-    flagged:   { label: 'Observado', color: 'error', icon: <ErrorOutlineIcon sx={{ fontSize: 14 }} /> },
-  };
-  const cfg = map[status];
-  if (cfg) return <Chip icon={cfg.icon} label={cfg.label} size="small" color={cfg.color} variant="outlined" sx={{ height: 22, fontSize: '0.7rem', '& .MuiChip-icon': { ml: 0.5 } }} />;
-  return <Chip label="Pendiente" size="small" variant="outlined" sx={{ height: 22, fontSize: '0.7rem', color: 'text.disabled', borderColor: 'divider' }} />;
-}
-
-/* ---- page ---- */
 
 export default function TenantPaymentsPage() {
   const { data: leases, isLoading: leasesLoading } = useTenantLeases();
@@ -137,8 +93,8 @@ export default function TenantPaymentsPage() {
       });
       toast.success('Comprobante cargado correctamente');
       setDialogOpen(false);
-    } catch (err: any) {
-      const msg = err.response?.data?.message || 'Error al cargar comprobante';
+    } catch (err: unknown) {
+      const msg = getApiError(err, 'Error al cargar comprobante');
       setError(msg); toast.error(msg);
     }
   };
@@ -159,7 +115,6 @@ export default function TenantPaymentsPage() {
     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
       <PageHeader title="Mis Pagos" />
 
-      {/* Fixed: payment account card */}
       {pa && (
         <Paper variant="outlined" sx={{ px: 2.5, py: 1.5, mb: 1.5, borderColor: 'divider', flexShrink: 0 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1 }}>
@@ -175,9 +130,7 @@ export default function TenantPaymentsPage() {
         </Paper>
       )}
 
-      {/* Scrollable table */}
       <Paper variant="outlined" sx={{ borderColor: 'divider', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        {/* Table header */}
         <Box sx={{ display: 'flex', alignItems: 'center', px: 2.5, py: 0.75, bgcolor: '#fafafa', borderBottom: '1px solid', borderColor: 'divider', flexShrink: 0 }}>
           <Typography variant="caption" sx={{ fontWeight: 700, width: 130, flexShrink: 0, textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary', fontSize: '0.65rem' }}>
             Período
@@ -194,7 +147,6 @@ export default function TenantPaymentsPage() {
           <Box sx={{ width: 120, flexShrink: 0 }} />
         </Box>
 
-        {/* Scrollable rows */}
         <Box sx={{ flex: 1, overflow: 'auto' }}>
           {ordered.map((period, idx) => {
             const payment = byPeriod.get(period);
@@ -202,7 +154,7 @@ export default function TenantPaymentsPage() {
             const isCur = period === curPeriod;
             const isPast = period < curPeriod && !payment;
             const canUpload = !payment && activeLease.status === 'active';
-            const displayAmount = payment?.expectedAmount || activeLease.currentRent;
+            const displayAmount = payment?.expectedAmount || activeLease.initialRent;
 
             return (
               <Box key={period}>
@@ -213,22 +165,19 @@ export default function TenantPaymentsPage() {
                   ...(isPast && { opacity: 0.45 }),
                   '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.02) },
                 }}>
-                  {/* Period */}
                   <Box sx={{ width: 130, flexShrink: 0 }}>
                     <Typography variant="body2" sx={{ fontWeight: isCur ? 700 : 500, fontSize: '0.82rem' }}>
-                      {fmtMonth(period)}
+                      {formatShortMonth(period)}
                     </Typography>
                     {isCur && <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 600, fontSize: '0.65rem', lineHeight: 1 }}>Mes actual</Typography>}
                   </Box>
 
-                  {/* Amount */}
                   <Box sx={{ width: 120, flexShrink: 0 }}>
                     <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.82rem' }}>
                       {displayAmount ? formatCurrency(displayAmount) : '—'}
                     </Typography>
                   </Box>
 
-                  {/* Detail */}
                   <Box sx={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
                     {payment?.message && (
                       <Typography variant="caption" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
@@ -242,12 +191,10 @@ export default function TenantPaymentsPage() {
                     )}
                   </Box>
 
-                  {/* Status */}
                   <Box sx={{ width: 100, flexShrink: 0, display: 'flex', justifyContent: 'center' }}>
-                    <StatusBadge status={status} />
+                    <PaymentStatusBadge status={status} />
                   </Box>
 
-                  {/* Action */}
                   <Box sx={{ width: 130, flexShrink: 0, textAlign: 'right' }}>
                     {canUpload && (
                       <Button size="small" variant={isCur ? 'contained' : 'text'} onClick={() => openDialog(period)} sx={{ fontSize: '0.72rem', py: 0.25, textTransform: 'none' }}>
@@ -278,15 +225,13 @@ export default function TenantPaymentsPage() {
         </Box>
       </Paper>
 
-      {/* Upload dialog */}
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ fontWeight: 700, pb: 1 }}>
-          Cargar comprobante — {dialogPeriod && fmtMonthLong(dialogPeriod)}
+          Cargar comprobante — {dialogPeriod && formatLongMonth(dialogPeriod)}
         </DialogTitle>
         <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
           {error && <Alert severity="error" sx={{ py: 0.5 }}>{error}</Alert>}
 
-          {/* File drop */}
           <Box
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) setFile(f); }}

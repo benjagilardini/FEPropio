@@ -3,6 +3,7 @@ import { Link as RouterLink } from 'react-router-dom';
 import { Box, TextField, Button, Typography, Alert, Link } from '@mui/material';
 import { useForm } from 'react-hook-form';
 import { authApi } from '../../api/authApi';
+import { getApiError } from '../../utils/getApiError';
 import AuthLayout from './AuthLayout';
 
 export default function ForgotPasswordPage() {
@@ -15,8 +16,8 @@ export default function ForgotPasswordPage() {
       setError('');
       await authApi.forgotPassword(data.email);
       setSent(true);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al enviar el correo');
+    } catch (err: unknown) {
+      setError(getApiError(err, 'Error al enviar el correo'));
     }
   };
 

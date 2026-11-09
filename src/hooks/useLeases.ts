@@ -62,7 +62,8 @@ export function useActivateLease() {
 export function useEndLease() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (leaseId: string) => leaseApi.endLease(leaseId),
+    mutationFn: ({ leaseId, data }: { leaseId: string; data?: { restitutionDate?: string; unitDestination?: 'vacant' | 'renew' } }) =>
+      leaseApi.endLease(leaseId, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['leases'] }),
   });
 }

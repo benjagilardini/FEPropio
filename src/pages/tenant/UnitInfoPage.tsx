@@ -19,7 +19,9 @@ import { useQuery } from '@tanstack/react-query';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
 import PageHeader from '../../components/common/PageHeader';
-import type { Unit } from '../../types';
+import { InfoRow } from '../../components/common/InfoRow';
+import { SectionTitle } from '../../components/common/SectionTitle';
+import type { Unit, Facilities } from '../../types';
 
 const utilityTypeLabels: Record<string, string> = {
   electricity: 'Electricidad',
@@ -36,25 +38,6 @@ const utilityIcons: Record<string, React.ReactNode> = {
   condominiumFees: <HomeWorkIcon sx={{ fontSize: 20, color: '#7e57c2' }} />,
   propertyTax: <ReceiptLongIcon sx={{ fontSize: 20, color: '#66bb6a' }} />,
 };
-
-function InfoRow({ label, value }: { label: string; value: string | null | undefined }) {
-  if (!value) return null;
-  return (
-    <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.75 }}>
-      <Typography variant="body2" sx={{ color: 'text.secondary' }}>{label}</Typography>
-      <Typography variant="body2" sx={{ fontWeight: 500, textAlign: 'right' }}>{value}</Typography>
-    </Box>
-  );
-}
-
-function SectionTitle({ icon, title }: { icon: React.ReactNode; title: string }) {
-  return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-      {icon}
-      <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>{title}</Typography>
-    </Box>
-  );
-}
 
 const facilityItems = [
   { key: 'waterShutoff', label: 'Llave de paso de agua', icon: <WaterDropIcon sx={{ fontSize: 18, color: '#42a5f5' }} /> },
@@ -135,7 +118,7 @@ export default function UnitInfoPage() {
   const addressCity = [a.neighborhood, a.city, a.province].filter(Boolean).join(', ');
   const fullAddress = `${addressMain}, ${addressCity}`;
   const unitTypeLabel = unit.unitType === 'apartment' ? 'Departamento' : 'Casa';
-  const hasFacilities = unit.facilities && facilityItems.some((f) => (unit.facilities as any)?.[f.key]);
+  const hasFacilities = unit.facilities && facilityItems.some((f) => unit.facilities?.[f.key as keyof Facilities]);
   const hasUtilities = (unit.utilityAccounts?.length ?? 0) > 0;
 
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddress)}`;
@@ -162,7 +145,6 @@ export default function UnitInfoPage() {
       />
 
       <Grid container spacing={2}>
-        {/* Row 1: Ubicación y datos | Suministros */}
         <Grid size={{ xs: 12, md: 6 }}>
           <Paper variant="outlined" sx={{ p: 2, borderColor: 'divider', height: '100%' }}>
             <SectionTitle icon={<LocationOnIcon sx={{ fontSize: 20, color: 'primary.main' }} />} title="Ubicación y datos" />
@@ -201,7 +183,6 @@ export default function UnitInfoPage() {
           )}
         </Grid>
 
-        {/* Row 2: Mapa | Instalaciones */}
         <Grid size={{ xs: 12, md: 6 }}>
           <Paper variant="outlined" sx={{ borderColor: 'divider', overflow: 'hidden', height: '100%', display: 'flex', flexDirection: 'column' }}>
             <Box sx={{ flex: 1, minHeight: 180 }}>
@@ -239,7 +220,7 @@ export default function UnitInfoPage() {
               <SectionTitle icon={<BuildIcon sx={{ fontSize: 20, color: 'primary.main' }} />} title="Ubicación de instalaciones" />
               <Grid container spacing={1.5}>
                 {facilityItems.map((f) => {
-                  const val = (unit.facilities as any)?.[f.key];
+                  const val = unit.facilities?.[f.key as keyof Facilities];
                   if (!val) return null;
                   return (
                     <Grid size={{ xs: 6 }} key={f.key}>

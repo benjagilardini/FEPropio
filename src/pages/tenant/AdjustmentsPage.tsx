@@ -11,84 +11,29 @@ import { adjustmentApi } from '../../api/adjustmentApi';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
 import PageHeader from '../../components/common/PageHeader';
+import { InfoRow } from '../../components/common/InfoRow';
+import { SectionTitle } from '../../components/common/SectionTitle';
+import { StatCard } from '../../components/common/StatCard';
 import { formatCurrency } from '../../utils/formatCurrency';
 import { formatDate } from '../../utils/formatDate';
+import { formatPct, formatMonthYear } from '../../utils/formatters';
+import { frequencyLabels } from '../../constants/labels';
 import type { TimelineEntry } from '../../types';
-
-const FREQUENCY_LABEL: Record<number, string> = {
-  1: 'Mensual', 2: 'Bimestral', 3: 'Trimestral',
-  4: 'Cuatrimestral', 6: 'Semestral', 12: 'Anual',
-};
-
-function formatPct(value: number): string {
-  return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
-}
-
-function formatMonthYear(isoDate: string): string {
-  const d = new Date(isoDate);
-  return d.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
-}
-
-function InfoRow({ label, value, bold, color }: {
-  label: string; value: string | null | undefined; bold?: boolean; color?: string;
-}) {
-  if (!value) return null;
-  return (
-    <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.75 }}>
-      <Typography variant="body2" sx={{ color: 'text.secondary' }}>{label}</Typography>
-      <Typography variant="body2" sx={{ fontWeight: bold ? 700 : 500, color: color || 'text.primary', textAlign: 'right' }}>
-        {value}
-      </Typography>
-    </Box>
-  );
-}
-
-function SectionTitle({ icon, title }: { icon: React.ReactNode; title: string }) {
-  return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
-      {icon}
-      <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>{title}</Typography>
-    </Box>
-  );
-}
-
-function StatCard({ label, value, subtitle, color }: {
-  label: string; value: string; subtitle?: string; color?: string;
-}) {
-  return (
-    <Box sx={{
-      flex: 1, p: 1.5, bgcolor: '#fff', border: '1px solid', borderColor: 'divider',
-      borderRadius: 2, textAlign: 'center', minWidth: 0,
-    }}>
-      <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.25 }}>
-        {label}
-      </Typography>
-      <Typography variant="h6" sx={{ fontWeight: 700, color: color || 'primary.main', fontSize: '1.1rem' }}>
-        {value}
-      </Typography>
-      {subtitle && (
-        <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 0.25 }}>
-          {subtitle}
-        </Typography>
-      )}
-    </Box>
-  );
-}
-
-/* ---- Range Bar Visualization ---- */
 
 function RangeBar({ entry, indexName }: { entry: TimelineEntry; indexName: string }) {
   const theme = useTheme();
   const hasRange = entry.minAmount !== entry.maxAmount;
-  const isConfirmed = entry.status === 'confirmed';
+  const isConfirmed = entry.status === 'final';
 
-  // Scale: from previousRent to maxAmount + some padding
-  const scaleMin = entry.previousRent;
-  const scaleMax = entry.maxAmount * 1.02;
+  const prevRent = parseFloat(entry.previousRent);
+  const minAmt = parseFloat(entry.minAmount);
+  const maxAmt = parseFloat(entry.maxAmount);
+  const scaleMin = prevRent;
+  const scaleMax = maxAmt * 1.02;
   const range = scaleMax - scaleMin || 1;
 
-  const minPct = hasRange ? ((entry.minAmount - scaleMin) / range) * 100 : 0;
-  const maxPct = ((entry.maxAmount - scaleMin) / range) * 100;
+  const minPct = hasRange ? ((minAmt - scaleMin) / range) * 100 : 0;
+  const maxPct = ((maxAmt - scaleMin) / range) * 100;
 
   return (
     <Paper variant="outlined" sx={{ p: 2.5, borderColor: 'divider' }}>
@@ -105,7 +50,6 @@ function RangeBar({ entry, indexName }: { entry: TimelineEntry; indexName: strin
         />
       </Box>
 
-      {/* Date & current rent */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
         <Box>
           <Typography variant="caption" sx={{ color: 'text.secondary' }}>Fecha efectiva</Typography>
@@ -117,13 +61,11 @@ function RangeBar({ entry, indexName }: { entry: TimelineEntry; indexName: strin
         </Box>
       </Box>
 
-      {/* Range bar */}
       <Box sx={{ mb: 1 }}>
         <Typography variant="caption" sx={{ color: 'text.secondary', mb: 1, display: 'block' }}>
           {hasRange ? 'Rango estimado del nuevo alquiler' : 'Nuevo alquiler'}
         </Typography>
 
-        {/* Amount labels */}
         <Box sx={{ position: 'relative', height: 32, mb: 0.5 }}>
           {hasRange ? (
             <>
@@ -174,7 +116,6 @@ function RangeBar({ entry, indexName }: { entry: TimelineEntry; indexName: strin
           )}
         </Box>
 
-        {/* Track */}
         <Box sx={{ position: 'relative', height: 8, bgcolor: alpha(theme.palette.grey[300], 0.5), borderRadius: 4 }}>
           {hasRange ? (
             <Box sx={{
@@ -185,13 +126,11 @@ function RangeBar({ entry, indexName }: { entry: TimelineEntry; indexName: strin
               bgcolor: alpha(theme.palette.primary.main, 0.35),
               borderRadius: 4,
             }}>
-              {/* Min dot */}
               <Box sx={{
                 position: 'absolute', left: 0, top: '50%', transform: 'translate(-50%, -50%)',
                 width: 14, height: 14, borderRadius: '50%',
                 bgcolor: '#fff', border: `3px solid ${theme.palette.primary.main}`,
               }} />
-              {/* Max dot */}
               <Box sx={{
                 position: 'absolute', right: 0, top: '50%', transform: 'translate(50%, -50%)',
                 width: 14, height: 14, borderRadius: '50%',
@@ -218,7 +157,6 @@ function RangeBar({ entry, indexName }: { entry: TimelineEntry; indexName: strin
           )}
         </Box>
 
-        {/* Scale labels */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
           <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: '0.65rem' }}>
             {formatCurrency(scaleMin)}
@@ -229,7 +167,6 @@ function RangeBar({ entry, indexName }: { entry: TimelineEntry; indexName: strin
         </Box>
       </Box>
 
-      {/* Variation */}
       <Box sx={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         mt: 1.5, pt: 1.5, borderTop: '1px solid', borderColor: 'divider',
@@ -237,12 +174,11 @@ function RangeBar({ entry, indexName }: { entry: TimelineEntry; indexName: strin
         <Typography variant="body2" sx={{ color: 'text.secondary' }}>Variación estimada</Typography>
         <Typography variant="body2" sx={{ fontWeight: 700, color: 'error.main' }}>
           {hasRange
-            ? `${formatPct(((entry.minAmount / entry.previousRent) - 1) * 100)} a ${formatPct(entry.variation)}`
+            ? `${formatPct(((minAmt / prevRent) - 1) * 100)} a ${formatPct(entry.variation)}`
             : formatPct(entry.variation)}
         </Typography>
       </Box>
 
-      {/* Pending info */}
       {entry.pendingPeriods.length > 0 && (
         <Box sx={{
           mt: 1.5, p: 1.5, bgcolor: alpha(theme.palette.primary.main, 0.06),
@@ -264,8 +200,6 @@ function RangeBar({ entry, indexName }: { entry: TimelineEntry; indexName: strin
   );
 }
 
-/* ---- Applied adjustments list ---- */
-
 function AppliedAdjustmentRow({ entry }: { entry: TimelineEntry }) {
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1 }}>
@@ -285,8 +219,6 @@ function AppliedAdjustmentRow({ entry }: { entry: TimelineEntry }) {
   );
 }
 
-/* ---- Main Page ---- */
-
 export default function AdjustmentsPage() {
   const { data: leases, isLoading: leasesLoading } = useTenantLeases();
   const activeLease = leases?.find((l) => l.status === 'active') || leases?.[0];
@@ -302,13 +234,13 @@ export default function AdjustmentsPage() {
   if (!summary) return <EmptyState message="No hay datos de ajustes disponibles." />;
 
   const { daysUntilNext, indexStats, timeline, contractProgress, lease } = summary;
-  const freq = FREQUENCY_LABEL[lease.adjustmentFrequencyMonths] || `Cada ${lease.adjustmentFrequencyMonths} meses`;
+  const freq = frequencyLabels[lease.adjustmentFrequencyMonths] || `Cada ${lease.adjustmentFrequencyMonths} meses`;
   const theme = useTheme();
 
   const nextIdx = timeline.findIndex((t) => new Date(t.effectiveDate) > new Date());
   const nextEntry = nextIdx >= 0 ? timeline[nextIdx] : null;
   const nextDate = nextEntry?.effectiveDate ?? null;
-  const appliedEntries = timeline.filter((t) => t.status === 'confirmed').sort(
+  const appliedEntries = timeline.filter((t) => t.status === 'final').sort(
     (a, b) => b.effectiveDate.localeCompare(a.effectiveDate),
   );
 
@@ -324,7 +256,6 @@ export default function AdjustmentsPage() {
         }
       />
 
-      {/* Stats bar */}
       <Box sx={{ display: 'flex', gap: 1.5, mb: 2 }}>
         <StatCard label="Alquiler actual" value={formatCurrency(summary.currentRent)} />
         <StatCard
@@ -349,15 +280,12 @@ export default function AdjustmentsPage() {
         )}
       </Box>
 
-      {/* Two columns: Range bar + Contract / Applied history */}
       <Box sx={{ display: 'flex', gap: 2 }}>
-        {/* LEFT: Next adjustment range + Contract */}
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
           {nextEntry && (
             <RangeBar entry={nextEntry} indexName={lease.adjustmentIndex} />
           )}
 
-          {/* Contract summary */}
           <Paper variant="outlined" sx={{ p: 2, borderColor: 'divider' }}>
             <SectionTitle
               icon={<DescriptionOutlinedIcon sx={{ fontSize: 20, color: 'primary.main' }} />}
@@ -388,7 +316,6 @@ export default function AdjustmentsPage() {
           </Paper>
         </Box>
 
-        {/* RIGHT: Applied adjustments */}
         {appliedEntries.length > 0 && (
           <Box sx={{ width: 420, flexShrink: 0 }}>
             <Paper variant="outlined" sx={{ p: 2, borderColor: 'divider' }}>
