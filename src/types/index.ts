@@ -1,4 +1,3 @@
-// ---- Auth ----
 export interface User {
   id: string;
   firstName: string;
@@ -23,7 +22,6 @@ export interface LoginInput {
   password: string;
 }
 
-// ---- Pagination ----
 export interface PaginatedResponse<T> {
   data: T[];
   pagination: {
@@ -34,7 +32,6 @@ export interface PaginatedResponse<T> {
   };
 }
 
-// ---- Unit ----
 export interface Address {
   street: string;
   number: string;
@@ -66,7 +63,6 @@ export interface Unit {
   id: string;
   address: Address;
   unitType: 'apartment' | 'house';
-  // Detail fields
   areaSqm?: number | null;
   propertyTaxAccount?: string | null;
   functionalUnit?: string | null;
@@ -76,7 +72,6 @@ export interface Unit {
   paymentAccount?: PaymentAccount | null;
   createdAt?: string;
   updatedAt?: string;
-  // List fields (from UnitListDTO)
   isOccupied?: boolean;
   tenant?: { name: string } | null;
   currentRent?: string | null;
@@ -94,7 +89,6 @@ export interface UnitInput {
   paymentAccount?: PaymentAccount | null;
 }
 
-// ---- Lease ----
 export type LeaseStatus = 'draft' | 'active' | 'ended';
 export type AdjustmentIndex = 'IPC' | 'ICL' | 'UVA';
 
@@ -135,6 +129,8 @@ export interface Lease {
   paymentAccount?: PaymentAccount | null;
   expenseResponsibility?: ExpenseResponsibility[];
   endedAt?: string | null;
+  restitutionDate?: string | null;
+  unitDestination?: 'vacant' | 'renew' | null;
   tenantName?: string | null;
   tenantDni?: string | null;
   tenantEmail?: string | null;
@@ -154,8 +150,7 @@ export interface LeaseInput {
   tenantEmail?: string;
 }
 
-// ---- Rent Adjustment ----
-export type AdjustmentStatus = 'pending' | 'estimated' | 'confirmed';
+export type AdjustmentStatus = 'estimated' | 'final';
 
 export interface RentAdjustment {
   id: string;
@@ -174,7 +169,6 @@ export interface RentAdjustment {
   updatedAt?: string;
 }
 
-// ---- Adjustment Summary ----
 export interface IndexStats {
   lastValue: string;
   lastDate: string;
@@ -215,7 +209,6 @@ export interface AdjustmentSummary {
   contractProgress: number;
 }
 
-// ---- Payment ----
 export type PaymentStatus = 'submitted' | 'confirmed' | 'flagged';
 
 export interface PaymentReceipt {
@@ -239,7 +232,6 @@ export interface PaymentInput {
   paymentDate: string;
 }
 
-// ---- Expense ----
 export type ExpenseCategory = 'tax' | 'insurance' | 'maintenance' | 'condominiumFees' | 'other';
 
 export interface Expense {
@@ -263,7 +255,6 @@ export interface ExpenseInput {
   maintenanceRequestId?: string;
 }
 
-// ---- Maintenance ----
 export type MaintenanceStatus = 'open' | 'inProgress' | 'resolved' | 'closed';
 export type MaintenanceCategory = 'plumbing' | 'electrical' | 'gas' | 'structural' | 'appliance' | 'other';
 
@@ -293,7 +284,6 @@ export interface MaintenanceInput {
   description: string;
 }
 
-// ---- Notification ----
 export type NotificationType =
   | 'adjustmentEstimated'
   | 'adjustmentFinal'
@@ -317,7 +307,6 @@ export interface Notification {
   createdAt: string;
 }
 
-// ---- Yield ----
 export interface YieldResult {
   unitId: string;
   period: { from: string; to: string };
@@ -389,11 +378,13 @@ export interface AnnualYieldResponse {
   netIncomeUsdOficial: number;
   netIncomeUsdBlue: number;
   dollarComparison: DollarComparison | null;
+  ipcAdjustedVariation: number | null;
+  inflationPercent: number | null;
+  rentIncreasePercent: number | null;
   dollarRates: { month: string; avgOficialVenta: number | null; avgBlueVenta: number | null }[];
   warnings: AnnualYieldWarning[];
 }
 
-// ---- Index Comparison ----
 export interface IndexComparison {
   contractedIndex: AdjustmentIndex;
   frequencyMonths: number;
